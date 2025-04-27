@@ -1,6 +1,6 @@
  // Configuration
         const API_URL = 'https://script.google.com/macros/s/AKfycbyywQhgMQhceoDhRLU-DgRtyG9Mx_a3AJW1dYJCTn8kz4M1CU2lX-gOelT5FzOt1Unvtg/exec';
-        let isAdmin = false;
+        let isAdmin = true;
         
         // DOM Elements
         const publicView = document.getElementById('public-view');
