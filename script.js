@@ -78,31 +78,34 @@
             adminPanel.style.display = 'none';
         }
         
-        function attemptLogin() {
-            const password = document.getElementById('admin-password').value;
-            
-            // In a real app, you would hash this before sending
-            fetch(API_URL, {
-                method: 'POST',
-                body: JSON.stringify({
-                    action: "verifyPassword",
-                    password: password
-                }),
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (!data.error) {
-                    sessionStorage.setItem('adminLoggedIn', 'true');
-                    showAdminPanel();
-                    loadAdminProducts();
-                } else {
-                    document.getElementById('login-error').style.display = 'block';
-                }
-            });
+       function attemptLogin() {
+    const password = document.getElementById('admin-password').value;
+    
+    fetch(API_URL, {
+        method: 'POST',
+        body: JSON.stringify({
+            action: "verifyPassword",
+            password: password
+        }),
+        headers: {
+            'Content-Type': 'application/json'
         }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {  // Changed from !data.error
+            sessionStorage.setItem('adminLoggedIn', 'true');
+            sessionStorage.setItem('adminPassword', password); // Store password for future requests
+            showAdminPanel();
+            loadAdminProducts();
+        } else {
+            document.getElementById('login-error').style.display = 'block';
+        }
+    })
+    .catch(error => {
+        document.getElementById('login-error').style.display = 'block';
+    });
+}
         
         function showAdminPanel() {
             publicView.style.display = 'none';
@@ -118,44 +121,53 @@
             location.reload();
         }
         
-        function loadAdminProducts() {
-            fetch(API_URL, {
-                method: 'POST',
-                body: JSON.stringify({
-                    action: "getProductsForAdmin",
-                    password: sessionStorage.getItem('adminPassword')
-                }),
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            })
-            .then(response => response.json())
-            .then(products => {
-                const container = document.getElementById('admin-products-container');
-                
-                if (products.length === 0) {
-                    container.innerHTML = '<div class="no-products">No products found.</div>';
-                    return;
-                }
-                
-                let html = '<div class="products">';
-                
-                products.forEach(product => {
-                    html += `
-                        <div class="product-card">
-                            <img src="${product.image}" alt="${product.title}" style="width: 100px; height: auto;">
-                            <h4>${product.title}</h4>
-                            <p>Price: ₹${product.price} (Was ₹${product.original_price})</p>
-                            <p>Platform: ${product.platform}</p>
-                            <a href="${product.affiliate_url}" target="_blank">View Product</a>
-                        </div>
-                    `;
-                });
-                
-                html += '</div>';
-                container.innerHTML = html;
-            });
+       function loadAdminProducts() {
+    fetch(API_URL, {
+        method: 'POST',
+        body: JSON.stringify({
+            action: "getProductsForAdmin",
+            password: sessionStorage.getItem('adminPassword') // Use the stored password
+        }),
+        headers: {
+            'Content-Type': 'application/json'
         }
+    })
+    .then(response => response.json())
+    .then(products => {
+        const container = document.getElementById('admin-products-container');
+        
+        if (!products || products.error) {
+            container.innerHTML = '<div class="error">Error loading products</div>';
+            return;
+        }
+        
+        if (products.length === 0) {
+            container.innerHTML = '<div class="no-products">No products found.</div>';
+            return;
+        }
+        
+        let html = '<div class="products">';
+        
+        products.forEach(product => {
+            html += `
+                <div class="product-card">
+                    <img src="${product.image}" alt="${product.title}" style="width: 100px; height: auto;">
+                    <h4>${product.title}</h4>
+                    <p>Price: ₹${product.price} (Was ₹${product.original_price})</p>
+                    <p>Platform: ${product.platform}</p>
+                    <a href="${product.affiliate_url}" target="_blank">View Product</a>
+                </div>
+            `;
+        });
+        
+        html += '</div>';
+        container.innerHTML = html;
+    })
+    .catch(error => {
+        document.getElementById('admin-products-container').innerHTML = 
+            '<div class="error">Failed to load products. Please try again later.</div>';
+    });
+}
         
         function addNewProduct() {
             const title = document.getElementById('product-title').value;
