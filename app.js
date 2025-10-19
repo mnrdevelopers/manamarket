@@ -101,30 +101,6 @@ function setupNavigation() {
             showPage('invoice-page');
         });
     }
-    
-    // Setup logout buttons
-    const logoutBtn1 = document.getElementById('logout-btn');
-    const logoutBtn2 = document.getElementById('logout-btn-2');
-    
-    if (logoutBtn1) {
-        logoutBtn1.addEventListener('click', function(e) {
-            e.preventDefault();
-            console.log('Logout button 1 clicked');
-            if (typeof auth !== 'undefined') {
-                auth.signOut();
-            }
-        });
-    }
-    
-    if (logoutBtn2) {
-        logoutBtn2.addEventListener('click', function(e) {
-            e.preventDefault();
-            console.log('Logout button 2 clicked');
-            if (typeof auth !== 'undefined') {
-                auth.signOut();
-            }
-        });
-    }
 }
 
 // Load dashboard data and statistics
