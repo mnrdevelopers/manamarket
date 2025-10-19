@@ -101,7 +101,23 @@ function setupNavigation() {
             showPage('invoice-page');
         });
     }
+
+// Invoices list navigation
+const invoicesNav1 = document.getElementById('invoices-nav');
+const invoicesNav2 = document.getElementById('create-invoice-nav-3'); // This should be invoices-nav-3 in your HTML
+
+if (invoicesNav1) {
+    invoicesNav1.addEventListener('click', function(e) {
+        e.preventDefault();
+        console.log('Invoices nav clicked');
+        showPage('invoices-page');
+        // Load invoices if the function exists
+        if (typeof loadAllInvoices === 'function') {
+            setTimeout(loadAllInvoices, 100);
+        }
+    });
 }
+    }
 
 // Load dashboard data and statistics
 function loadDashboardData() {
