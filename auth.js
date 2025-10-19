@@ -30,6 +30,7 @@ function showPage(pageId) {
     }
 }
 
+// Global message function with fallback
 function showMessage(message, type) {
     const messageEl = document.getElementById('auth-message');
     if (messageEl) {
@@ -41,6 +42,9 @@ function showMessage(message, type) {
         setTimeout(() => {
             messageEl.classList.add('hidden');
         }, 5000);
+    } else {
+        // Fallback if element doesn't exist yet
+        console.log(`${type}: ${message}`);
     }
 }
 
