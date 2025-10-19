@@ -1,19 +1,42 @@
 // Main Application Logic
 
+// Global page management function
+function showPage(pageId) {
+    console.log('showPage called for:', pageId);
+    
+    // Hide all pages
+    const pages = document.querySelectorAll('.page');
+    pages.forEach(page => {
+        page.style.display = 'none';
+        page.classList.remove('active');
+    });
+    
+    // Show the requested page
+    const targetPage = document.getElementById(pageId);
+    if (targetPage) {
+        targetPage.style.display = 'block';
+        targetPage.classList.add('active');
+        console.log('Successfully showed page:', pageId);
+    } else {
+        console.error('Page not found:', pageId);
+    }
+}
+
 // Initialize the application
 function initApp() {
     console.log('Initializing app...');
     
-    // Wait for auth to be ready
+    // Setup navigation first
+    setupNavigation();
+    
+    // Check auth state and show appropriate page
     if (typeof auth !== 'undefined' && auth.currentUser) {
-        setupNavigation();
-        const user = auth.currentUser;
-        if (user && document.getElementById('dashboard-page').classList.contains('active')) {
-            console.log('User is logged in and on dashboard, loading data...');
-            setTimeout(loadDashboardData, 100);
-        }
+        console.log('User already logged in, showing dashboard');
+        showPage('dashboard-page');
+        setTimeout(loadDashboardData, 100);
     } else {
-        setTimeout(initApp, 100); // Retry after auth loads
+        console.log('No user logged in, showing login page');
+        showPage('login-page');
     }
 }
 
@@ -25,27 +48,67 @@ function setupNavigation() {
     const dashboardNav1 = document.getElementById('dashboard-nav');
     const dashboardNav2 = document.getElementById('dashboard-nav-2');
     
-    const setupNavHandler = (element, pageId) => {
-        if (element) {
-            element.addEventListener('click', function() {
-                console.log('Navigation clicked:', pageId);
-                showPage(pageId);
-                if (pageId === 'dashboard-page') {
-                    setTimeout(loadDashboardData, 100);
-                }
-            });
-        }
-    };
+    if (dashboardNav1) {
+        dashboardNav1.addEventListener('click', function(e) {
+            e.preventDefault();
+            console.log('Dashboard nav 1 clicked');
+            showPage('dashboard-page');
+            setTimeout(loadDashboardData, 100);
+        });
+    }
     
-    setupNavHandler(dashboardNav1, 'dashboard-page');
-    setupNavHandler(dashboardNav2, 'dashboard-page');
+    if (dashboardNav2) {
+        dashboardNav2.addEventListener('click', function(e) {
+            e.preventDefault();
+            console.log('Dashboard nav 2 clicked');
+            showPage('dashboard-page');
+            setTimeout(loadDashboardData, 100);
+        });
+    }
     
     // Create invoice navigation
     const createInvoiceNav1 = document.getElementById('create-invoice-nav');
     const createInvoiceNav2 = document.getElementById('create-invoice-nav-2');
     
-    setupNavHandler(createInvoiceNav1, 'invoice-page');
-    setupNavHandler(createInvoiceNav2, 'invoice-page');
+    if (createInvoiceNav1) {
+        createInvoiceNav1.addEventListener('click', function(e) {
+            e.preventDefault();
+            console.log('Create invoice nav 1 clicked');
+            showPage('invoice-page');
+        });
+    }
+    
+    if (createInvoiceNav2) {
+        createInvoiceNav2.addEventListener('click', function(e) {
+            e.preventDefault();
+            console.log('Create invoice nav 2 clicked');
+            showPage('invoice-page');
+        });
+    }
+    
+    // Setup logout buttons
+    const logoutBtn1 = document.getElementById('logout-btn');
+    const logoutBtn2 = document.getElementById('logout-btn-2');
+    
+    if (logoutBtn1) {
+        logoutBtn1.addEventListener('click', function(e) {
+            e.preventDefault();
+            console.log('Logout button 1 clicked');
+            if (typeof auth !== 'undefined') {
+                auth.signOut();
+            }
+        });
+    }
+    
+    if (logoutBtn2) {
+        logoutBtn2.addEventListener('click', function(e) {
+            e.preventDefault();
+            console.log('Logout button 2 clicked');
+            if (typeof auth !== 'undefined') {
+                auth.signOut();
+            }
+        });
+    }
 }
 
 // Load dashboard data and statistics
@@ -127,9 +190,42 @@ function loadDashboardData() {
         });
 }
 
+// Enhanced authentication state observer
+function setupAuthObserver() {
+    if (typeof auth !== 'undefined') {
+        auth.onAuthStateChanged((user) => {
+            console.log('=== AUTH STATE CHANGED ===');
+            console.log('User:', user);
+            
+            if (user) {
+                // User is signed in
+                console.log('User signed in, showing dashboard');
+                showPage('dashboard-page');
+                
+                // Load dashboard data after a short delay
+                setTimeout(() => {
+                    if (typeof loadDashboardData === 'function') {
+                        loadDashboardData();
+                    }
+                }, 500);
+            } else {
+                // User is signed out
+                console.log('User signed out, showing login page');
+                showPage('login-page');
+            }
+        });
+    } else {
+        console.error('Firebase auth not available');
+    }
+}
+
 // Initialize the application when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
     console.log('DOM loaded, initializing app...');
-    // Wait for all scripts to load
+    
+    // Setup auth observer first
+    setupAuthObserver();
+    
+    // Then initialize the rest of the app
     setTimeout(initApp, 300);
 });
