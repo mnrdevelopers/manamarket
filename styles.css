@@ -572,3 +572,58 @@ html, body {
 #invoice-page {
     z-index: 20;
 }
+
+/* Additional Styles Needed */
+.no-invoices, .error {
+    text-align: center;
+    padding: 20px;
+    color: #7f8c8d;
+}
+
+.invoice-customer {
+    font-weight: bold;
+}
+
+.invoice-mobile, .invoice-date, .invoice-amount {
+    color: #666;
+}
+
+/* Print Styles for Invoice */
+@media print {
+    body * {
+        visibility: hidden;
+    }
+    .invoice-preview-content,
+    .invoice-preview-content * {
+        visibility: visible;
+    }
+    .invoice-preview-content {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+    }
+    .modal, .modal-content {
+        position: static;
+        background: white;
+        box-shadow: none;
+    }
+    .modal-header, .modal-footer {
+        display: none;
+    }
+}
+
+/* Ensure form validation styles */
+.form-group input:invalid {
+    border-color: #e74c3c;
+}
+
+.form-group input:valid {
+    border-color: #2ecc71;
+}
+
+/* Loading states */
+.loading {
+    opacity: 0.6;
+    pointer-events: none;
+}
