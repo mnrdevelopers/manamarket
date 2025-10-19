@@ -5,8 +5,22 @@ function initApp() {
     // Setup navigation
     setupNavigation();
     
-    // Load dashboard data when dashboard is shown
-    document.getElementById('dashboard-page').addEventListener('DOMNodeInserted', loadDashboardData);
+    // Load initial dashboard data if user is logged in
+    const user = auth.currentUser;
+    if (user && document.getElementById('dashboard-page').classList.contains('active')) {
+        loadDashboardData();
+    }
+}
+
+// Show specific page and hide others
+function showPage(pageId) {
+    // Hide all pages
+    document.querySelectorAll('.page').forEach(page => {
+        page.classList.remove('active');
+    });
+    
+    // Show the requested page
+    document.getElementById(pageId).classList.add('active');
 }
 
 // Setup navigation between pages
@@ -33,10 +47,14 @@ function setupNavigation() {
 }
 
 // Load dashboard data and statistics
-// Load dashboard data and statistics
 function loadDashboardData() {
     const user = auth.currentUser;
-    if (!user) return;
+    if (!user) {
+        console.log('No user logged in');
+        return;
+    }
+
+    console.log('Loading dashboard data for user:', user.uid);
 
     // Load recent invoices
     loadRecentInvoices();
@@ -83,4 +101,7 @@ function loadDashboardData() {
 }
 
 // Initialize the application when DOM is loaded
-document.addEventListener('DOMContentLoaded', initApp);
+document.addEventListener('DOMContentLoaded', function() {
+    // Wait a bit to ensure auth.js is loaded and initialized
+    setTimeout(initApp, 100);
+});
