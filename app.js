@@ -63,61 +63,101 @@ function setupNavigation() {
     // Dashboard navigation
     const dashboardNav1 = document.getElementById('dashboard-nav');
     const dashboardNav2 = document.getElementById('dashboard-nav-2');
+    const dashboardNav3 = document.getElementById('dashboard-nav-3');
     
-    if (dashboardNav1) {
-        dashboardNav1.addEventListener('click', function(e) {
-            e.preventDefault();
-            console.log('Dashboard nav 1 clicked');
-            showPage('dashboard-page');
-            setTimeout(loadDashboardData, 100);
-        });
-    }
-    
-    if (dashboardNav2) {
-        dashboardNav2.addEventListener('click', function(e) {
-            e.preventDefault();
-            console.log('Dashboard nav 2 clicked');
-            showPage('dashboard-page');
-            setTimeout(loadDashboardData, 100);
-        });
-    }
+    [dashboardNav1, dashboardNav2, dashboardNav3].forEach((nav, index) => {
+        if (nav) {
+            nav.addEventListener('click', function(e) {
+                e.preventDefault();
+                console.log('Dashboard nav clicked', index + 1);
+                showPage('dashboard-page');
+                setTimeout(loadDashboardData, 100);
+            });
+        }
+    });
     
     // Create invoice navigation
     const createInvoiceNav1 = document.getElementById('create-invoice-nav');
     const createInvoiceNav2 = document.getElementById('create-invoice-nav-2');
+    const createInvoiceNav3 = document.getElementById('create-invoice-nav-3');
     
-    if (createInvoiceNav1) {
-        createInvoiceNav1.addEventListener('click', function(e) {
-            e.preventDefault();
-            console.log('Create invoice nav 1 clicked');
-            showPage('invoice-page');
-        });
-    }
-    
-    if (createInvoiceNav2) {
-        createInvoiceNav2.addEventListener('click', function(e) {
-            e.preventDefault();
-            console.log('Create invoice nav 2 clicked');
-            showPage('invoice-page');
-        });
-    }
-
-// Invoices list navigation
-const invoicesNav1 = document.getElementById('invoices-nav');
-const invoicesNav2 = document.getElementById('create-invoice-nav-3'); // This should be invoices-nav-3 in your HTML
-
-if (invoicesNav1) {
-    invoicesNav1.addEventListener('click', function(e) {
-        e.preventDefault();
-        console.log('Invoices nav clicked');
-        showPage('invoices-page');
-        // Load invoices if the function exists
-        if (typeof loadAllInvoices === 'function') {
-            setTimeout(loadAllInvoices, 100);
+    [createInvoiceNav1, createInvoiceNav2, createInvoiceNav3].forEach((nav, index) => {
+        if (nav) {
+            nav.addEventListener('click', function(e) {
+                e.preventDefault();
+                console.log('Create invoice nav clicked', index + 1);
+                showPage('invoice-page');
+            });
         }
     });
-}
+    
+    // Invoices list navigation
+    const invoicesNav1 = document.getElementById('invoices-list-nav');
+    const invoicesNav2 = document.getElementById('invoices-list-nav-2');
+    const invoicesNav3 = document.getElementById('invoices-list-nav-3');
+    
+    [invoicesNav1, invoicesNav2, invoicesNav3].forEach((nav, index) => {
+        if (nav) {
+            nav.addEventListener('click', function(e) {
+                e.preventDefault();
+                console.log('Invoices list nav clicked', index + 1);
+                showPage('invoices-page');
+                // Load invoices if the function exists
+                if (typeof loadAllInvoices === 'function') {
+                    setTimeout(loadAllInvoices, 100);
+                }
+            });
+        }
+    });
+    
+    // Quick action buttons in dashboard
+    const quickCreateInvoice = document.getElementById('quick-create-invoice');
+    const quickViewInvoices = document.getElementById('quick-view-invoices');
+    const viewAllInvoices = document.getElementById('view-all-invoices');
+    
+    if (quickCreateInvoice) {
+        quickCreateInvoice.addEventListener('click', function(e) {
+            e.preventDefault();
+            console.log('Quick create invoice clicked');
+            showPage('invoice-page');
+        });
     }
+    
+    if (quickViewInvoices) {
+        quickViewInvoices.addEventListener('click', function(e) {
+            e.preventDefault();
+            console.log('Quick view invoices clicked');
+            showPage('invoices-page');
+            if (typeof loadAllInvoices === 'function') {
+                setTimeout(loadAllInvoices, 100);
+            }
+        });
+    }
+    
+    if (viewAllInvoices) {
+        viewAllInvoices.addEventListener('click', function(e) {
+            e.preventDefault();
+            console.log('View all invoices clicked');
+            showPage('invoices-page');
+            if (typeof loadAllInvoices === 'function') {
+                setTimeout(loadAllInvoices, 100);
+            }
+        });
+    }
+    
+    // Back to invoices button in create invoice page
+    const backToInvoices = document.getElementById('back-to-invoices');
+    if (backToInvoices) {
+        backToInvoices.addEventListener('click', function(e) {
+            e.preventDefault();
+            console.log('Back to invoices clicked');
+            showPage('invoices-page');
+            if (typeof loadAllInvoices === 'function') {
+                setTimeout(loadAllInvoices, 100);
+            }
+        });
+    }
+}
 
 // Load dashboard data and statistics
 function loadDashboardData() {
