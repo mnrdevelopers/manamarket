@@ -2,68 +2,85 @@
 
 // Initialize the application
 function initApp() {
+    console.log('Initializing app...');
     // Setup navigation
     setupNavigation();
     
-    // Load initial dashboard data if user is logged in
+    // Check if we're already on dashboard and user is logged in
     const user = auth.currentUser;
     if (user && document.getElementById('dashboard-page').classList.contains('active')) {
+        console.log('User is logged in and on dashboard, loading data...');
         loadDashboardData();
     }
 }
 
-// Show specific page and hide others
-function showPage(pageId) {
-    // Hide all pages
-    document.querySelectorAll('.page').forEach(page => {
-        page.classList.remove('active');
-    });
-    
-    // Show the requested page
-    document.getElementById(pageId).classList.add('active');
-}
-
 // Setup navigation between pages
 function setupNavigation() {
-    // Dashboard navigation
-    document.getElementById('dashboard-nav').addEventListener('click', function() {
-        showPage('dashboard-page');
-        loadDashboardData();
-    });
+    console.log('Setting up navigation...');
     
-    document.getElementById('dashboard-nav-2').addEventListener('click', function() {
-        showPage('dashboard-page');
-        loadDashboardData();
-    });
+    // Dashboard navigation
+    const dashboardNav1 = document.getElementById('dashboard-nav');
+    const dashboardNav2 = document.getElementById('dashboard-nav-2');
+    
+    if (dashboardNav1) {
+        dashboardNav1.addEventListener('click', function() {
+            console.log('Dashboard nav 1 clicked');
+            showPage('dashboard-page');
+            loadDashboardData();
+        });
+    }
+    
+    if (dashboardNav2) {
+        dashboardNav2.addEventListener('click', function() {
+            console.log('Dashboard nav 2 clicked');
+            showPage('dashboard-page');
+            loadDashboardData();
+        });
+    }
     
     // Create invoice navigation
-    document.getElementById('create-invoice-nav').addEventListener('click', function() {
-        showPage('invoice-page');
-    });
+    const createInvoiceNav1 = document.getElementById('create-invoice-nav');
+    const createInvoiceNav2 = document.getElementById('create-invoice-nav-2');
     
-    document.getElementById('create-invoice-nav-2').addEventListener('click', function() {
-        showPage('invoice-page');
-    });
+    if (createInvoiceNav1) {
+        createInvoiceNav1.addEventListener('click', function() {
+            console.log('Create invoice nav 1 clicked');
+            showPage('invoice-page');
+        });
+    }
+    
+    if (createInvoiceNav2) {
+        createInvoiceNav2.addEventListener('click', function() {
+            console.log('Create invoice nav 2 clicked');
+            showPage('invoice-page');
+        });
+    }
 }
 
 // Load dashboard data and statistics
 function loadDashboardData() {
+    console.log('Loading dashboard data...');
     const user = auth.currentUser;
     if (!user) {
-        console.log('No user logged in');
+        console.log('No user logged in, skipping dashboard data load');
         return;
     }
 
     console.log('Loading dashboard data for user:', user.uid);
 
     // Load recent invoices
-    loadRecentInvoices();
+    if (typeof loadRecentInvoices === 'function') {
+        loadRecentInvoices();
+    } else {
+        console.log('loadRecentInvoices function not available yet');
+    }
 
     // Get all invoices and filter locally to avoid complex queries
     db.collection('invoices')
         .where('createdBy', '==', user.uid)
         .get()
         .then((querySnapshot) => {
+            console.log('Found invoices:', querySnapshot.size);
             const today = new Date();
             today.setHours(0, 0, 0, 0);
             
@@ -94,6 +111,8 @@ function loadDashboardData() {
             document.getElementById('today-invoices').textContent = todayInvoices;
             document.getElementById('month-invoices').textContent = monthInvoices;
             document.getElementById('total-revenue').textContent = `₹${totalRevenue.toFixed(2)}`;
+            
+            console.log('Dashboard stats updated:', { todayInvoices, monthInvoices, totalRevenue });
         })
         .catch((error) => {
             console.error('Error loading invoices for dashboard:', error);
@@ -102,6 +121,7 @@ function loadDashboardData() {
 
 // Initialize the application when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
-    // Wait a bit to ensure auth.js is loaded and initialized
+    console.log('DOM loaded, initializing app...');
+    // Wait a bit to ensure all scripts are loaded
     setTimeout(initApp, 100);
 });
