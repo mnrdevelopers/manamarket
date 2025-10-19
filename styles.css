@@ -19,6 +19,7 @@ body {
 
 .page {
     display: none;
+    min-height: 100vh;
 }
 
 .page.active {
@@ -63,6 +64,10 @@ body {
     align-items: center;
     justify-content: center;
     background: linear-gradient(135deg, #3498db, #8e44ad);
+}
+
+#login-page.active {
+    display: flex !important;
 }
 
 .login-container {
@@ -205,6 +210,14 @@ body {
 }
 
 /* Dashboard Styles */
+#dashboard-page {
+    background-color: #f5f7fa;
+}
+
+#dashboard-page.active {
+    display: block;
+}
+
 .dashboard-header {
     margin-bottom: 30px;
 }
@@ -275,7 +288,15 @@ body {
     gap: 10px;
 }
 
-/* Invoice Form Styles */
+/* Invoice Page Styles */
+#invoice-page {
+    background-color: #f5f7fa;
+}
+
+#invoice-page.active {
+    display: block;
+}
+
 .invoice-header {
     margin-bottom: 30px;
 }
@@ -378,6 +399,10 @@ body {
     align-items: center;
     justify-content: center;
     z-index: 1000;
+}
+
+.modal.hidden {
+    display: none !important;
 }
 
 .modal-content {
@@ -515,4 +540,35 @@ body {
     .modal-content {
         width: 95%;
     }
+    
+    .invoice-header-preview {
+        flex-direction: column;
+        gap: 20px;
+    }
+    
+    .totals-preview {
+        width: 100%;
+    }
+}
+
+/* Ensure pages take full height */
+html, body {
+    height: 100%;
+}
+
+/* Debug styles - you can remove these after testing */
+.page {
+    position: relative;
+}
+
+#login-page {
+    z-index: 10;
+}
+
+#dashboard-page {
+    z-index: 20;
+}
+
+#invoice-page {
+    z-index: 20;
 }
