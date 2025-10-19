@@ -13,30 +13,52 @@ firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 
+// Global page management functions
+function showPage(pageId) {
+    console.log('Showing page:', pageId);
+    // Hide all pages
+    document.querySelectorAll('.page').forEach(page => {
+        page.classList.remove('active');
+    });
+    
+    // Show the requested page
+    const targetPage = document.getElementById(pageId);
+    if (targetPage) {
+        targetPage.classList.add('active');
+    } else {
+        console.error('Page not found:', pageId);
+    }
+}
+
+function showMessage(message, type) {
+    const messageEl = document.getElementById('auth-message');
+    if (messageEl) {
+        messageEl.textContent = message;
+        messageEl.className = `message ${type}`;
+        messageEl.classList.remove('hidden');
+        
+        // Auto hide after 5 seconds
+        setTimeout(() => {
+            messageEl.classList.add('hidden');
+        }, 5000);
+    }
+}
+
 // Authentication State Observer
 auth.onAuthStateChanged((user) => {
     console.log('Auth state changed, user:', user);
     if (user) {
         // User is signed in
         showPage('dashboard-page');
-        // Wait for DOM to be ready before loading dashboard data
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', function() {
-                setTimeout(() => {
-                    loadDashboardData();
-                    if (typeof loadRecentInvoices === 'function') {
-                        loadRecentInvoices();
-                    }
-                }, 100);
-            });
-        } else {
-            setTimeout(() => {
+        // Load dashboard data after a short delay to ensure DOM is ready
+        setTimeout(() => {
+            if (typeof loadDashboardData === 'function') {
                 loadDashboardData();
-                if (typeof loadRecentInvoices === 'function') {
-                    loadRecentInvoices();
-                }
-            }, 100);
-        }
+            }
+            if (typeof loadRecentInvoices === 'function') {
+                loadRecentInvoices();
+            }
+        }, 500);
     } else {
         // User is signed out
         showPage('login-page');
@@ -54,6 +76,7 @@ document.getElementById('login-form').addEventListener('submit', (e) => {
         .then((userCredential) => {
             // Signed in successfully
             showMessage('Login successful!', 'success');
+            // The auth state observer will handle page navigation
         })
         .catch((error) => {
             showMessage(error.message, 'error');
@@ -104,90 +127,8 @@ document.getElementById('back-to-login').addEventListener('click', (e) => {
     document.getElementById('login-form').classList.remove('hidden');
 });
 
-// Utility Functions
-function showPage(pageId) {
-    // Hide all pages
-    document.querySelectorAll('.page').forEach(page => {
-        page.classList.remove('active');
-    });
-    
-    // Show the requested page
-    document.getElementById(pageId).classList.add('active');
-}
-
-function showMessage(message, type) {
-    const messageEl = document.getElementById('auth-message');
-    messageEl.textContent = message;
-    messageEl.className = `message ${type}`;
-    messageEl.classList.remove('hidden');
-    
-    // Auto hide after 5 seconds
-    setTimeout(() => {
-        messageEl.classList.add('hidden');
-    }, 5000);
-}
-
 // Initialize authentication functionality when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
+    console.log('Auth.js loaded');
     setupLogoutButtons();
 });
-
-// Load dashboard data (make it globally accessible)
-function loadDashboardData() {
-    const user = auth.currentUser;
-    if (!user) {
-        console.log('No user logged in');
-        return;
-    }
-
-    console.log('Loading dashboard data for user:', user.uid);
-
-    // Load recent invoices
-    if (typeof loadRecentInvoices === 'function') {
-        loadRecentInvoices();
-    }
-
-    // Get all invoices and filter locally to avoid complex queries
-    db.collection('invoices')
-        .where('createdBy', '==', user.uid)
-        .get()
-        .then((querySnapshot) => {
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-            
-            const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-            
-            let todayInvoices = 0;
-            let monthInvoices = 0;
-            let totalRevenue = 0;
-
-            querySnapshot.forEach((doc) => {
-                const invoice = doc.data();
-                const invoiceDate = invoice.createdAt ? invoice.createdAt.toDate() : new Date();
-                
-                totalRevenue += invoice.grandTotal;
-                
-                // Check if invoice is from today
-                if (invoiceDate >= today) {
-                    todayInvoices++;
-                }
-                
-                // Check if invoice is from this month
-                if (invoiceDate >= firstDayOfMonth) {
-                    monthInvoices++;
-                }
-            });
-
-            // Update dashboard stats
-            const todayInvoicesEl = document.getElementById('today-invoices');
-            const monthInvoicesEl = document.getElementById('month-invoices');
-            const totalRevenueEl = document.getElementById('total-revenue');
-            
-            if (todayInvoicesEl) todayInvoicesEl.textContent = todayInvoices;
-            if (monthInvoicesEl) monthInvoicesEl.textContent = monthInvoices;
-            if (totalRevenueEl) totalRevenueEl.textContent = `₹${totalRevenue.toFixed(2)}`;
-        })
-        .catch((error) => {
-            console.error('Error loading invoices for dashboard:', error);
-        });
-}
