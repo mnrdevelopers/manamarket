@@ -3,14 +3,17 @@
 // Initialize the application
 function initApp() {
     console.log('Initializing app...');
-    // Setup navigation
-    setupNavigation();
     
-    // Check if we're already on dashboard and user is logged in
-    const user = auth.currentUser;
-    if (user && document.getElementById('dashboard-page').classList.contains('active')) {
-        console.log('User is logged in and on dashboard, loading data...');
-        loadDashboardData();
+    // Wait for auth to be ready
+    if (typeof auth !== 'undefined' && auth.currentUser) {
+        setupNavigation();
+        const user = auth.currentUser;
+        if (user && document.getElementById('dashboard-page').classList.contains('active')) {
+            console.log('User is logged in and on dashboard, loading data...');
+            setTimeout(loadDashboardData, 100);
+        }
+    } else {
+        setTimeout(initApp, 100); // Retry after auth loads
     }
 }
 
@@ -22,47 +25,49 @@ function setupNavigation() {
     const dashboardNav1 = document.getElementById('dashboard-nav');
     const dashboardNav2 = document.getElementById('dashboard-nav-2');
     
-    if (dashboardNav1) {
-        dashboardNav1.addEventListener('click', function() {
-            console.log('Dashboard nav 1 clicked');
-            showPage('dashboard-page');
-            loadDashboardData();
-        });
-    }
+    const setupNavHandler = (element, pageId) => {
+        if (element) {
+            element.addEventListener('click', function() {
+                console.log('Navigation clicked:', pageId);
+                showPage(pageId);
+                if (pageId === 'dashboard-page') {
+                    setTimeout(loadDashboardData, 100);
+                }
+            });
+        }
+    };
     
-    if (dashboardNav2) {
-        dashboardNav2.addEventListener('click', function() {
-            console.log('Dashboard nav 2 clicked');
-            showPage('dashboard-page');
-            loadDashboardData();
-        });
-    }
+    setupNavHandler(dashboardNav1, 'dashboard-page');
+    setupNavHandler(dashboardNav2, 'dashboard-page');
     
     // Create invoice navigation
     const createInvoiceNav1 = document.getElementById('create-invoice-nav');
     const createInvoiceNav2 = document.getElementById('create-invoice-nav-2');
     
-    if (createInvoiceNav1) {
-        createInvoiceNav1.addEventListener('click', function() {
-            console.log('Create invoice nav 1 clicked');
-            showPage('invoice-page');
-        });
-    }
-    
-    if (createInvoiceNav2) {
-        createInvoiceNav2.addEventListener('click', function() {
-            console.log('Create invoice nav 2 clicked');
-            showPage('invoice-page');
-        });
-    }
+    setupNavHandler(createInvoiceNav1, 'invoice-page');
+    setupNavHandler(createInvoiceNav2, 'invoice-page');
 }
 
 // Load dashboard data and statistics
 function loadDashboardData() {
     console.log('Loading dashboard data...');
+    
+    // Check if required elements exist
+    const todayInvoicesEl = document.getElementById('today-invoices');
+    const monthInvoicesEl = document.getElementById('month-invoices');
+    const totalRevenueEl = document.getElementById('total-revenue');
+    
+    if (!todayInvoicesEl || !monthInvoicesEl || !totalRevenueEl) {
+        console.log('Dashboard elements not found, skipping data load');
+        return;
+    }
+    
     const user = auth.currentUser;
     if (!user) {
         console.log('No user logged in, skipping dashboard data load');
+        todayInvoicesEl.textContent = '0';
+        monthInvoicesEl.textContent = '0';
+        totalRevenueEl.textContent = '₹0';
         return;
     }
 
@@ -94,7 +99,7 @@ function loadDashboardData() {
                 const invoice = doc.data();
                 const invoiceDate = invoice.createdAt ? invoice.createdAt.toDate() : new Date();
                 
-                totalRevenue += invoice.grandTotal;
+                totalRevenue += invoice.grandTotal || 0;
                 
                 // Check if invoice is from today
                 if (invoiceDate >= today) {
@@ -108,20 +113,23 @@ function loadDashboardData() {
             });
 
             // Update dashboard stats
-            document.getElementById('today-invoices').textContent = todayInvoices;
-            document.getElementById('month-invoices').textContent = monthInvoices;
-            document.getElementById('total-revenue').textContent = `₹${totalRevenue.toFixed(2)}`;
+            todayInvoicesEl.textContent = todayInvoices;
+            monthInvoicesEl.textContent = monthInvoices;
+            totalRevenueEl.textContent = `₹${totalRevenue.toFixed(2)}`;
             
             console.log('Dashboard stats updated:', { todayInvoices, monthInvoices, totalRevenue });
         })
         .catch((error) => {
             console.error('Error loading invoices for dashboard:', error);
+            todayInvoicesEl.textContent = '0';
+            monthInvoicesEl.textContent = '0';
+            totalRevenueEl.textContent = '₹0';
         });
 }
 
 // Initialize the application when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
     console.log('DOM loaded, initializing app...');
-    // Wait a bit to ensure all scripts are loaded
-    setTimeout(initApp, 100);
+    // Wait for all scripts to load
+    setTimeout(initApp, 300);
 });
