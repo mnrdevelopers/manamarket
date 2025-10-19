@@ -101,6 +101,7 @@ function setupNavigation() {
             showPage('invoice-page');
         });
     }
+} // <-- This closing brace was missing
 
 // Load dashboard data and statistics
 function loadDashboardData() {
@@ -238,5 +239,4 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Then initialize the rest of the app
     setTimeout(initApp, 300);
-  });
-}
+});
