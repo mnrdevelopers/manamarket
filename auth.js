@@ -13,22 +13,52 @@ firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 
-// Global page management functions
-function showPage(pageId) {
-    console.log('Showing page:', pageId);
+// Global message display function
+function showMessage(message, type) {
+    const messageEl = document.getElementById('auth-message');
+    if (messageEl) {
+        messageEl.textContent = message;
+        messageEl.className = `message ${type}`;
+        messageEl.classList.remove('hidden');
+        
+        // Auto-hide success messages after 3 seconds
+        if (type === 'success') {
+            setTimeout(() => {
+                messageEl.classList.add('hidden');
+            }, 3000);
+        }
+    }
+}
+
+// Setup logout buttons function
+function setupLogoutButtons() {
+    console.log('Setting up logout buttons...');
     
-    // Hide all pages
-    document.querySelectorAll('.page').forEach(page => {
-        page.classList.remove('active');
-    });
+    const logoutBtn1 = document.getElementById('logout-btn');
+    const logoutBtn2 = document.getElementById('logout-btn-2');
     
-    // Show the requested page
-    const targetPage = document.getElementById(pageId);
-    if (targetPage) {
-        targetPage.classList.add('active');
-        console.log('Page shown successfully:', pageId);
-    } else {
-        console.error('Page not found:', pageId);
+    if (logoutBtn1) {
+        logoutBtn1.addEventListener('click', function(e) {
+            e.preventDefault();
+            console.log('Logout button 1 clicked');
+            auth.signOut().then(() => {
+                showMessage('Logged out successfully', 'success');
+            }).catch((error) => {
+                showMessage('Error logging out: ' + error.message, 'error');
+            });
+        });
+    }
+    
+    if (logoutBtn2) {
+        logoutBtn2.addEventListener('click', function(e) {
+            e.preventDefault();
+            console.log('Logout button 2 clicked');
+            auth.signOut().then(() => {
+                showMessage('Logged out successfully', 'success');
+            }).catch((error) => {
+                showMessage('Error logging out: ' + error.message, 'error');
+            });
+        });
     }
 }
 
@@ -65,12 +95,22 @@ document.getElementById('reset-password-form').addEventListener('submit', (e) =>
     
     const email = document.getElementById('reset-email').value;
     
+    // Show loading state
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    const originalText = submitBtn.textContent;
+    submitBtn.textContent = 'Sending...';
+    submitBtn.disabled = true;
+    
     auth.sendPasswordResetEmail(email)
         .then(() => {
-            showMessage('Password reset email sent!', 'success');
+            showMessage('Password reset email sent! Check your inbox.', 'success');
+            submitBtn.textContent = originalText;
+            submitBtn.disabled = false;
         })
         .catch((error) => {
             showMessage(error.message, 'error');
+            submitBtn.textContent = originalText;
+            submitBtn.disabled = false;
         });
 });
 
