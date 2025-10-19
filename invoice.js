@@ -67,6 +67,12 @@ function calculateProductTotal(productRow) {
     const price = parseFloat(productRow.querySelector('.product-price').value) || 0;
     const gstPercent = parseFloat(productRow.querySelector('.product-gst').value) || 0;
     
+    // Validate inputs
+    if (quantity < 0) quantity = 0;
+    if (price < 0) price = 0;
+    if (gstPercent < 0) gstPercent = 0;
+    if (gstPercent > 100) gstPercent = 100;
+    
     const subtotal = quantity * price;
     const gstAmount = subtotal * (gstPercent / 100);
     const total = subtotal + gstAmount;
