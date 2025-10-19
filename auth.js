@@ -16,6 +16,7 @@ const db = firebase.firestore();
 // Global page management functions
 function showPage(pageId) {
     console.log('Showing page:', pageId);
+    
     // Hide all pages
     document.querySelectorAll('.page').forEach(page => {
         page.classList.remove('active');
@@ -25,6 +26,7 @@ function showPage(pageId) {
     const targetPage = document.getElementById(pageId);
     if (targetPage) {
         targetPage.classList.add('active');
+        console.log('Page shown successfully:', pageId);
     } else {
         console.error('Page not found:', pageId);
     }
@@ -51,21 +53,45 @@ function showMessage(message, type) {
 // Authentication State Observer
 auth.onAuthStateChanged((user) => {
     console.log('Auth state changed, user:', user);
+    
+    const loginPage = document.getElementById('login-page');
+    const dashboardPage = document.getElementById('dashboard-page');
+    const invoicePage = document.getElementById('invoice-page');
+    
     if (user) {
         // User is signed in
-        showPage('dashboard-page');
-        // Load dashboard data after a short delay to ensure DOM is ready
-        setTimeout(() => {
-            if (typeof loadDashboardData === 'function') {
-                loadDashboardData();
-            }
-            if (typeof loadRecentInvoices === 'function') {
-                loadRecentInvoices();
-            }
-        }, 500);
+        console.log('User signed in, hiding login page');
+        
+        // Hide login page
+        if (loginPage) loginPage.classList.remove('active');
+        
+        // Show dashboard by default
+        if (dashboardPage) {
+            dashboardPage.classList.add('active');
+            // Load dashboard data
+            setTimeout(() => {
+                if (typeof loadDashboardData === 'function') {
+                    loadDashboardData();
+                }
+                if (typeof loadRecentInvoices === 'function') {
+                    loadRecentInvoices();
+                }
+            }, 500);
+        }
+        
+        // Ensure invoice page is hidden unless explicitly navigated to
+        if (invoicePage) invoicePage.classList.remove('active');
+        
     } else {
         // User is signed out
-        showPage('login-page');
+        console.log('User signed out, showing login page');
+        
+        // Show login page
+        if (loginPage) loginPage.classList.add('active');
+        
+        // Hide other pages
+        if (dashboardPage) dashboardPage.classList.remove('active');
+        if (invoicePage) invoicePage.classList.remove('active');
     }
 });
 
@@ -76,14 +102,23 @@ document.getElementById('login-form').addEventListener('submit', (e) => {
     const email = document.getElementById('email').value;
     const password = document.getElementById('password').value;
     
+    // Show loading state
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    const originalText = submitBtn.textContent;
+    submitBtn.textContent = 'Logging in...';
+    submitBtn.disabled = true;
+    
     auth.signInWithEmailAndPassword(email, password)
         .then((userCredential) => {
             // Signed in successfully
             showMessage('Login successful!', 'success');
-            // The auth state observer will handle page navigation
+            // The auth state observer will handle page navigation automatically
         })
         .catch((error) => {
             showMessage(error.message, 'error');
+            // Reset button
+            submitBtn.textContent = originalText;
+            submitBtn.disabled = false;
         });
 });
 
