@@ -63,66 +63,65 @@
         </div>
     </div>
 
-    <!-- Dashboard Page -->
-    <div id="dashboard-page" class="page">
-        <header class="header">
-            <div class="header-content">
-                <h1>SHIVAM INDANE GAS</h1>
-                <nav>
-                    <button id="dashboard-nav" class="nav-btn active">Dashboard</button>
-                    <button id="create-invoice-nav" class="nav-btn">Create Invoice</button>
-                    <button id="invoices-nav" class="nav-btn">All Invoices</button>
-                    <button id="logout-btn" class="btn-secondary">Logout</button>
-                </nav>
+ <!-- Dashboard Page -->
+<div id="dashboard-page" class="page">
+    <header class="header">
+        <div class="header-content">
+            <h1>SHIVAM INDANE GAS</h1>
+            <nav>
+                <button id="dashboard-nav" class="nav-btn active">Dashboard</button>
+                <button id="create-invoice-nav" class="nav-btn">Create Invoice</button>
+                <button id="invoices-list-nav" class="nav-btn">All Invoices</button>
+                <button id="logout-btn" class="btn-secondary">Logout</button>
+            </nav>
+        </div>
+    </header>
+    
+    <main class="main-content">
+        <div class="dashboard-header">
+            <h2>Dashboard</h2>
+            <div class="quick-actions" style="margin-bottom: 20px; display: flex; gap: 15px; flex-wrap: wrap;">
+                <button id="quick-create-invoice" class="btn-primary">+ Create New Invoice</button>
+                <button id="quick-view-invoices" class="btn-secondary">📋 View All Invoices</button>
             </div>
-        </header>
+            <div class="dashboard-stats">
+                <!-- existing stat cards -->
+            </div>
+        </div>
         
-        <main class="main-content">
-            <div class="dashboard-header">
-                <h2>Dashboard</h2>
-                <div class="dashboard-stats">
-                    <div class="stat-card">
-                        <h3>Today's Invoices</h3>
-                        <p id="today-invoices">0</p>
-                    </div>
-                    <div class="stat-card">
-                        <h3>This Month</h3>
-                        <p id="month-invoices">0</p>
-                    </div>
-                    <div class="stat-card">
-                        <h3>Total Revenue</h3>
-                        <p id="total-revenue">₹0</p>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="recent-invoices">
+        <div class="recent-invoices">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                 <h3>Recent Invoices</h3>
-                <div id="invoices-list" class="invoices-list">
-                    <p>Loading invoices...</p>
-                </div>
+                <button id="view-all-invoices" class="btn-secondary">View All Invoices</button>
             </div>
-        </main>
-    </div>
+            <div id="invoices-list" class="invoices-list">
+                <p>Loading invoices...</p>
+            </div>
+        </div>
+    </main>
+</div>
 
-    <!-- Create Invoice Page -->
-    <div id="invoice-page" class="page">
-        <header class="header">
-            <div class="header-content">
-                <h1>SHIVAM INDANE GAS</h1>
-                <nav>
-                    <button id="dashboard-nav-2" class="nav-btn">Dashboard</button>
-                    <button id="create-invoice-nav-2" class="nav-btn active">Create Invoice</button>
-                    <button id="invoices-nav" class="nav-btn">All Invoices</button>
-                    <button id="logout-btn-2" class="btn-secondary">Logout</button>
-                </nav>
+  <!-- Create Invoice Page -->
+<div id="invoice-page" class="page">
+    <header class="header">
+        <div class="header-content">
+            <h1>SHIVAM INDANE GAS</h1>
+            <nav>
+                <button id="dashboard-nav-2" class="nav-btn">Dashboard</button>
+                <button id="create-invoice-nav-2" class="nav-btn active">Create Invoice</button>
+                <button id="invoices-list-nav-2" class="nav-btn">All Invoices</button>
+                <button id="logout-btn-2" class="btn-secondary">Logout</button>
+            </nav>
+        </div>
+    </header>
+    
+    <main class="main-content">
+        <div class="invoice-header">
+            <h2>Create New Invoice</h2>
+            <div style="margin-top: 10px;">
+                <button id="back-to-invoices" class="btn-secondary">← Back to Invoices</button>
             </div>
-        </header>
-        
-        <main class="main-content">
-            <div class="invoice-header">
-                <h2>Create New Invoice</h2>
-            </div>
+        </div>
             
             <form id="invoice-form" class="invoice-form">
                 <div class="customer-details">
@@ -178,7 +177,7 @@
             <nav>
                 <button id="dashboard-nav-3" class="nav-btn">Dashboard</button>
                 <button id="create-invoice-nav-3" class="nav-btn">Create Invoice</button>
-                <button id="invoices-nav" class="nav-btn active">All Invoices</button>
+                <button id="invoices-list-nav-3" class="nav-btn active">All Invoices</button>
                 <button id="logout-btn-3" class="btn-secondary">Logout</button>
             </nav>
         </div>
