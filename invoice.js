@@ -63,9 +63,9 @@ function addProductRow() {
 
 // Calculate total for a single product row
 function calculateProductTotal(productRow) {
-    const quantity = parseFloat(productRow.querySelector('.product-quantity').value) || 0;
-    const price = parseFloat(productRow.querySelector('.product-price').value) || 0;
-    const gstPercent = parseFloat(productRow.querySelector('.product-gst').value) || 0;
+    let quantity = parseFloat(productRow.querySelector('.product-quantity').value) || 0;
+    let price = parseFloat(productRow.querySelector('.product-price').value) || 0;
+    let gstPercent = parseFloat(productRow.querySelector('.product-gst').value) || 0;
     
     // Validate inputs
     if (quantity < 0) quantity = 0;
@@ -314,9 +314,19 @@ function printInvoice(invoiceId) {
 function generateInvoicePreview(invoice, invoiceId) {
     const previewContent = document.getElementById('invoice-preview-content');
     
-    // Format date
-    const invoiceDate = invoice.createdAt ? 
-        invoice.createdAt.toDate().toLocaleDateString() : new Date().toLocaleDateString();
+    // Format date - Handle both Firestore Timestamp and regular Date objects
+    let invoiceDate;
+    if (invoice.createdAt) {
+        if (typeof invoice.createdAt.toDate === 'function') {
+            // It's a Firestore Timestamp
+            invoiceDate = invoice.createdAt.toDate().toLocaleDateString();
+        } else {
+            // It's a regular Date object or string
+            invoiceDate = new Date(invoice.createdAt).toLocaleDateString();
+        }
+    } else {
+        invoiceDate = new Date().toLocaleDateString();
+    }
     
     // Generate products table rows
     let productsRows = '';
@@ -337,10 +347,10 @@ function generateInvoicePreview(invoice, invoiceId) {
         <div class="invoice-preview-content">
             <div class="invoice-header-preview">
                 <div class="company-info">
-                    <h2>I DANE GAS</h2>
+                    <h2>SHIVAM INDANE GAS</h2>
                     <p>Professional Gas Services</p>
                     <p>123 Business Street, City, State 12345</p>
-                    <p>Phone: +91 98765 43210 | Email: info@idanegas.com</p>
+                    <p>Phone: +91 98765 43210 | Email: info@shivamindanegas.com</p>
                 </div>
                 <div class="invoice-meta">
                     <h3>INVOICE</h3>
@@ -411,33 +421,51 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
         
+        // Validate at least one product has data
+        const productRows = document.querySelectorAll('.product-row');
+        let hasValidProduct = false;
+        
+        productRows.forEach(row => {
+            const productName = row.querySelector('.product-name').value;
+            if (productName.trim()) {
+                hasValidProduct = true;
+            }
+        });
+        
+        if (!hasValidProduct) {
+            showMessage('Please add at least one product before previewing', 'error');
+            return;
+        }
+        
         // Create a temporary invoice object for preview
         const tempInvoice = {
             customerName: customerName,
             customerMobile: customerMobile,
             products: [],
-            subtotal: parseFloat(document.getElementById('subtotal-amount').textContent.replace('₹', '')),
-            gstAmount: parseFloat(document.getElementById('gst-amount').textContent.replace('₹', '')),
-            grandTotal: parseFloat(document.getElementById('grand-total').textContent.replace('₹', '')),
+            subtotal: parseFloat(document.getElementById('subtotal-amount').textContent.replace('₹', '')) || 0,
+            gstAmount: parseFloat(document.getElementById('gst-amount').textContent.replace('₹', '')) || 0,
+            grandTotal: parseFloat(document.getElementById('grand-total').textContent.replace('₹', '')) || 0,
             createdAt: new Date()
         };
         
         // Get products from form
-        const productRows = document.querySelectorAll('.product-row');
         productRows.forEach(row => {
             const productName = row.querySelector('.product-name').value;
-            const quantity = parseFloat(row.querySelector('.product-quantity').value);
-            const price = parseFloat(row.querySelector('.product-price').value);
-            const gst = parseFloat(row.querySelector('.product-gst').value);
-            const total = parseFloat(row.querySelector('.product-total').value.replace('₹', ''));
+            const quantity = parseFloat(row.querySelector('.product-quantity').value) || 0;
+            const price = parseFloat(row.querySelector('.product-price').value) || 0;
+            const gst = parseFloat(row.querySelector('.product-gst').value) || 0;
+            const totalElement = row.querySelector('.product-total').value;
+            const total = totalElement ? parseFloat(totalElement.replace('₹', '')) : 0;
             
-            tempInvoice.products.push({
-                name: productName,
-                quantity: quantity,
-                price: price,
-                gst: gst,
-                total: total
-            });
+            if (productName.trim()) {
+                tempInvoice.products.push({
+                    name: productName,
+                    quantity: quantity,
+                    price: price,
+                    gst: gst,
+                    total: total
+                });
+            }
         });
         
         generateInvoicePreview(tempInvoice, 'PREVIEW');
