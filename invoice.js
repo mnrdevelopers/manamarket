@@ -193,14 +193,12 @@ function resetInvoiceForm() {
 function loadRecentInvoices() {
     const user = auth.currentUser;
     if (!user) return;
-    
+
     const invoicesList = document.getElementById('invoices-list');
     invoicesList.innerHTML = '<p>Loading invoices...</p>';
-    
+
     db.collection('invoices')
         .where('createdBy', '==', user.uid)
-        .orderBy('createdAt', 'desc')
-        .limit(10)
         .get()
         .then((querySnapshot) => {
             invoicesList.innerHTML = '';
@@ -209,9 +207,27 @@ function loadRecentInvoices() {
                 invoicesList.innerHTML = '<p class="no-invoices">No invoices found. Create your first invoice!</p>';
                 return;
             }
-            
+
+            // Convert to array and sort by date locally
+            const invoices = [];
             querySnapshot.forEach((doc) => {
-                const invoice = doc.data();
+                invoices.push({
+                    id: doc.id,
+                    ...doc.data()
+                });
+            });
+
+            // Sort by date (newest first)
+            invoices.sort((a, b) => {
+                const dateA = a.createdAt ? a.createdAt.toDate() : new Date(0);
+                const dateB = b.createdAt ? b.createdAt.toDate() : new Date(0);
+                return dateB - dateA;
+            });
+
+            // Show only last 10 invoices
+            const recentInvoices = invoices.slice(0, 10);
+
+            recentInvoices.forEach((invoice) => {
                 const invoiceDate = invoice.createdAt ? 
                     invoice.createdAt.toDate().toLocaleDateString() : 'Date not available';
                 
@@ -223,14 +239,14 @@ function loadRecentInvoices() {
                     <div class="invoice-date">${invoiceDate}</div>
                     <div class="invoice-amount">₹${invoice.grandTotal.toFixed(2)}</div>
                     <div class="invoice-actions">
-                        <button class="btn-secondary view-invoice-btn" data-id="${doc.id}">View</button>
-                        <button class="btn-primary print-invoice-btn" data-id="${doc.id}">Print</button>
+                        <button class="btn-secondary view-invoice-btn" data-id="${invoice.id}">View</button>
+                        <button class="btn-primary print-invoice-btn" data-id="${invoice.id}">Print</button>
                     </div>
                 `;
                 
                 invoicesList.appendChild(invoiceItem);
             });
-            
+
             // Add event listeners to view and print buttons
             document.querySelectorAll('.view-invoice-btn').forEach(button => {
                 button.addEventListener('click', function() {
