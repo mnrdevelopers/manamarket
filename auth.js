@@ -32,51 +32,6 @@ function showPage(pageId) {
     }
 }
 
-// Authentication State Observer
-auth.onAuthStateChanged((user) => {
-    console.log('Auth state changed, user:', user);
-    
-    const loginPage = document.getElementById('login-page');
-    const dashboardPage = document.getElementById('dashboard-page');
-    const invoicePage = document.getElementById('invoice-page');
-    
-    if (user) {
-        // User is signed in
-        console.log('User signed in, hiding login page');
-        
-        // Hide login page
-        if (loginPage) loginPage.classList.remove('active');
-        
-        // Show dashboard by default
-        if (dashboardPage) {
-            dashboardPage.classList.add('active');
-            // Load dashboard data
-            setTimeout(() => {
-                if (typeof loadDashboardData === 'function') {
-                    loadDashboardData();
-                }
-                if (typeof loadRecentInvoices === 'function') {
-                    loadRecentInvoices();
-                }
-            }, 500);
-        }
-        
-        // Ensure invoice page is hidden unless explicitly navigated to
-        if (invoicePage) invoicePage.classList.remove('active');
-        
-    } else {
-        // User is signed out
-        console.log('User signed out, showing login page');
-        
-        // Show login page
-        if (loginPage) loginPage.classList.add('active');
-        
-        // Hide other pages
-        if (dashboardPage) dashboardPage.classList.remove('active');
-        if (invoicePage) invoicePage.classList.remove('active');
-    }
-});
-
 // Login Form Handler
 document.getElementById('login-form').addEventListener('submit', (e) => {
     e.preventDefault();
@@ -118,22 +73,6 @@ document.getElementById('reset-password-form').addEventListener('submit', (e) =>
             showMessage(error.message, 'error');
         });
 });
-
-// Logout Handler
-function setupLogoutButtons() {
-    const logoutButtons = document.querySelectorAll('#logout-btn, #logout-btn-2');
-    logoutButtons.forEach(button => {
-        button.addEventListener('click', () => {
-            auth.signOut()
-                .then(() => {
-                    showMessage('Logged out successfully', 'success');
-                })
-                .catch((error) => {
-                    showMessage(error.message, 'error');
-                });
-        });
-    });
-}
 
 // Toggle between Login and Reset Password forms
 document.getElementById('forgot-password-link').addEventListener('click', (e) => {
