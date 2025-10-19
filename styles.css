@@ -844,3 +844,66 @@ html, body {
         width: 100%;
     }
 }
+
+/* Quick Actions Styles */
+.quick-actions {
+    margin-bottom: 25px;
+}
+
+.quick-actions button {
+    padding: 12px 20px;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+/* Enhanced Dashboard Styles */
+.dashboard-header {
+    margin-bottom: 25px;
+}
+
+.recent-invoices-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+/* Button hover effects */
+.btn-primary, .btn-secondary {
+    transition: all 0.3s ease;
+    transform: translateY(0);
+}
+
+.btn-primary:hover, .btn-secondary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Navigation active states */
+.nav-btn.active {
+    background-color: #3498db;
+    color: white;
+}
+
+/* Responsive quick actions */
+@media (max-width: 768px) {
+    .quick-actions {
+        flex-direction: column;
+    }
+    
+    .quick-actions button {
+        width: 100%;
+        text-align: center;
+    }
+    
+    .recent-invoices-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .recent-invoices-header button {
+        width: 100%;
+    }
+}
