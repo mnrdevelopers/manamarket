@@ -120,3 +120,9 @@ function setupLogoutButtons() {
         });
     }
 }
+
+// Initialize authentication functionality when DOM is loaded
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('Auth.js loaded');
+    setupLogoutButtons();
+});
