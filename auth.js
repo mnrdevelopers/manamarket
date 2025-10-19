@@ -32,24 +32,6 @@ function showPage(pageId) {
     }
 }
 
-// Global message function with fallback
-function showMessage(message, type) {
-    const messageEl = document.getElementById('auth-message');
-    if (messageEl) {
-        messageEl.textContent = message;
-        messageEl.className = `message ${type}`;
-        messageEl.classList.remove('hidden');
-        
-        // Auto hide after 5 seconds
-        setTimeout(() => {
-            messageEl.classList.add('hidden');
-        }, 5000);
-    } else {
-        // Fallback if element doesn't exist yet
-        console.log(`${type}: ${message}`);
-    }
-}
-
 // Authentication State Observer
 auth.onAuthStateChanged((user) => {
     console.log('Auth state changed, user:', user);
