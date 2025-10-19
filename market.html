@@ -3,110 +3,203 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MANA MARKET</title>
-    <!-- Add these two lines to connect CSS and JS -->
+    <title>SHIVAM INDANE GAS - Professional Invoice System</title>
     <link rel="stylesheet" href="styles.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
 </head>
 <body>
-    <!-- Public Product View -->
-    <div id="public-view">
-        <header>
-            <div class="header-content">
-                <h1>Mana Market</h1>
-                <p class="tagline">Mana Deals, Mana Feel.</p>
-                <button id="admin-login-btn" class="admin-btn">
-                    <i class="fas fa-lock"></i> Admin
-                </button>
-            </div>
-        </header>
-        
-        <div id="products-container">
-            <div class="loading">Loading products...</div>
-        </div>
-        
-        <div class="disclaimer">
-            <p><strong>Disclosure:</strong> As an Amazon Associate and Flipkart Affiliate, I earn from qualifying purchases.</p>
-        </div>
-    </div>
-    
-    <!-- Login Form (hidden by default) -->
-    <div id="login-form" class="login-form" style="display: none;">
+    <!-- Login Page -->
+    <div id="login-page" class="page active">
         <div class="login-container">
-            <h2>Admin Login</h2>
-            <div class="input-group">
-                <i class="fas fa-key"></i>
-                <input type="password" id="admin-password" placeholder="Enter admin password">
+            <div class="logo">
+                <h1>SHIVAM INDANE GAS</h1>
+                <p>Professional Invoice System</p>
             </div>
-            <button id="login-btn" class="login-button">
-                <i class="fas fa-sign-in-alt"></i> Login
-            </button>
-            <p id="login-error" style="color: red; display: none;">
-                <i class="fas fa-exclamation-circle"></i> Incorrect password
-            </p>
-        </div>
-    </div>
-    
-    <!-- Admin Panel (hidden by default) -->
-    <div id="admin-panel" class="admin-panel">
-        <div class="admin-header">
-            <h2><i class="fas fa-tools"></i> Product Management</h2>
-            <button id="logout-btn" class="logout-btn">
-                <i class="fas fa-sign-out-alt"></i> Logout
-            </button>
-        </div>
-        
-        <div class="product-form">
-            <h3><i class="fas fa-plus-circle"></i> Add New Product</h3>
-            <div class="form-row">
-                <div class="input-group">
-                    <label><i class="fas fa-heading"></i> Product Title</label>
-                    <input type="text" id="product-title" required>
+            <form id="login-form" class="auth-form">
+                <h2>Staff Login</h2>
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" required>
                 </div>
-                <div class="input-group">
-                    <label><i class="fas fa-store"></i> Platform</label>
-                    <select id="product-platform" required>
-                        <option value="amazon">Amazon</option>
-                        <option value="flipkart">Flipkart</option>
-                    </select>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" required>
                 </div>
-            </div>
+                <button type="submit" class="btn-primary">Login</button>
+                <div class="auth-links">
+                    <a href="#" id="forgot-password-link">Forgot Password?</a>
+                </div>
+            </form>
             
-            <div class="form-row">
-                <div class="input-group">
-                    <label><i class="fas fa-image"></i> Image URL</label>
-                    <input type="url" id="product-image" required>
+            <!-- Password Reset Form -->
+            <form id="reset-password-form" class="auth-form hidden">
+                <h2>Reset Password</h2>
+                <div class="form-group">
+                    <label for="reset-email">Email</label>
+                    <input type="email" id="reset-email" required>
                 </div>
-                <div class="input-group">
-                    <label><i class="fas fa-link"></i> Affiliate URL</label>
-                    <input type="url" id="product-url" required>
+                <button type="submit" class="btn-primary">Send Reset Link</button>
+                <div class="auth-links">
+                    <a href="#" id="back-to-login">Back to Login</a>
                 </div>
-            </div>
+            </form>
             
-            <div class="form-row">
-                <div class="input-group">
-                    <label><i class="fas fa-tag"></i> Current Price (₹)</label>
-                    <input type="number" id="product-price" required>
-                </div>
-                <div class="input-group">
-                    <label><i class="fas fa-tags"></i> Original Price (₹)</label>
-                    <input type="number" id="product-original-price" required>
-                </div>
-            </div>
-            
-            <button id="add-product-btn" class="add-product-button">
-                <i class="fas fa-plus"></i> Add Product
-            </button>
-            <p id="form-message" style="margin-top: 10px;"></p>
-        </div>
-        
-        <h3><i class="fas fa-box-open"></i> Existing Products</h3>
-        <div id="admin-products-container">
-            <div class="loading">Loading products...</div>
+            <div id="auth-message" class="message hidden"></div>
         </div>
     </div>
 
-    <!-- Add this line before closing body tag to connect JavaScript -->
-    <script src="script.js"></script>
+    <!-- Dashboard Page -->
+    <div id="dashboard-page" class="page">
+        <header class="header">
+            <div class="header-content">
+                <h1>SHIVAM INDANE GAS</h1>
+                <nav>
+                    <button id="dashboard-nav" class="nav-btn active">Dashboard</button>
+                    <button id="create-invoice-nav" class="nav-btn">Create Invoice</button>
+                    <button id="logout-btn" class="btn-secondary">Logout</button>
+                </nav>
+            </div>
+        </header>
+        
+        <main class="main-content">
+            <div class="dashboard-header">
+                <h2>Dashboard</h2>
+                <div class="dashboard-stats">
+                    <div class="stat-card">
+                        <h3>Today's Invoices</h3>
+                        <p id="today-invoices">0</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>This Month</h3>
+                        <p id="month-invoices">0</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Total Revenue</h3>
+                        <p id="total-revenue">₹0</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="recent-invoices">
+                <h3>Recent Invoices</h3>
+                <div id="invoices-list" class="invoices-list">
+                    <!-- Invoices will be loaded here -->
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Create Invoice Page -->
+    <div id="invoice-page" class="page">
+        <header class="header">
+            <div class="header-content">
+                <h1>SHIVAM INDANE GAS</h1>
+                <nav>
+                    <button id="dashboard-nav-2" class="nav-btn">Dashboard</button>
+                    <button id="create-invoice-nav-2" class="nav-btn active">Create Invoice</button>
+                    <button id="logout-btn-2" class="btn-secondary">Logout</button>
+                </nav>
+            </div>
+        </header>
+        
+        <main class="main-content">
+            <div class="invoice-header">
+                <h2>Create New Invoice</h2>
+            </div>
+            
+            <form id="invoice-form" class="invoice-form">
+                <div class="customer-details">
+                    <h3>Customer Details</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="customer-name">Customer Name *</label>
+                            <input type="text" id="customer-name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="customer-mobile">Mobile Number *</label>
+                            <input type="tel" id="customer-mobile" required>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="products-section">
+                    <h3>Products</h3>
+                    <div id="products-container">
+                        <div class="product-row">
+                            <div class="form-group">
+                                <label>Product Name</label>
+                                <input type="text" class="product-name" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Quantity</label>
+                                <input type="number" class="product-quantity" min="1" value="1" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Price (₹)</label>
+                                <input type="number" class="product-price" min="0" step="0.01" required>
+                            </div>
+                            <div class="form-group">
+                                <label>GST (%)</label>
+                                <input type="number" class="product-gst" min="0" max="100" value="18" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Total (₹)</label>
+                                <input type="text" class="product-total" readonly>
+                            </div>
+                            <button type="button" class="btn-remove-product">Remove</button>
+                        </div>
+                    </div>
+                    <button type="button" id="add-product-btn" class="btn-secondary">Add Product</button>
+                </div>
+                
+                <div class="invoice-summary">
+                    <div class="summary-row">
+                        <span>Subtotal:</span>
+                        <span id="subtotal-amount">₹0.00</span>
+                    </div>
+                    <div class="summary-row">
+                        <span>GST Total:</span>
+                        <span id="gst-amount">₹0.00</span>
+                    </div>
+                    <div class="summary-row total">
+                        <span>Grand Total:</span>
+                        <span id="grand-total">₹0.00</span>
+                    </div>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="submit" class="btn-primary">Save Invoice</button>
+                    <button type="button" id="preview-invoice-btn" class="btn-secondary">Preview Invoice</button>
+                </div>
+            </form>
+        </main>
+    </div>
+
+    <!-- Invoice Preview Modal -->
+    <div id="invoice-preview-modal" class="modal hidden">
+        <div class="modal-content invoice-preview">
+            <div class="modal-header">
+                <h2>Invoice Preview</h2>
+                <button id="close-preview" class="close-btn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="invoice-preview-content">
+                    <!-- Invoice preview will be generated here -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="print-invoice-btn" class="btn-primary">Print Invoice</button>
+                <button id="close-preview-btn" class="btn-secondary">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="auth.js"></script>
+    <script src="invoice.js"></script>
+    <script src="app.js"></script>
 </body>
 </html>
