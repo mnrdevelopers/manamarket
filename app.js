@@ -238,4 +238,5 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Then initialize the rest of the app
     setTimeout(initApp, 300);
-});
+  });
+}
