@@ -22,6 +22,14 @@ function showPage(pageId) {
     }
 }
 
+// Hide all pages initially and show loading
+function hideAllPages() {
+    document.querySelectorAll('.page').forEach(page => {
+        page.style.display = 'none';
+        page.classList.remove('active');
+    });
+}
+
 // Initialize the application
 function initApp() {
     console.log('Initializing app...');
@@ -38,6 +46,14 @@ function initApp() {
         console.log('No user logged in, showing login page');
         showPage('login-page');
     }
+    
+    // Hide loading screen
+    setTimeout(() => {
+        const loadingScreen = document.getElementById('loading-screen');
+        if (loadingScreen) {
+            loadingScreen.classList.add('hidden');
+        }
+    }, 500);
 }
 
 // Setup navigation between pages
@@ -213,9 +229,25 @@ function setupAuthObserver() {
                 console.log('User signed out, showing login page');
                 showPage('login-page');
             }
+            
+            // Hide loading screen after auth check
+            setTimeout(() => {
+                const loadingScreen = document.getElementById('loading-screen');
+                if (loadingScreen) {
+                    loadingScreen.classList.add('hidden');
+                }
+            }, 300);
         });
     } else {
         console.error('Firebase auth not available');
+        // Fallback: show login page after timeout
+        setTimeout(() => {
+            showPage('login-page');
+            const loadingScreen = document.getElementById('loading-screen');
+            if (loadingScreen) {
+                loadingScreen.classList.add('hidden');
+            }
+        }, 1000);
     }
 }
 
@@ -223,7 +255,10 @@ function setupAuthObserver() {
 document.addEventListener('DOMContentLoaded', function() {
     console.log('DOM loaded, initializing app...');
     
-    // Setup auth observer first
+    // Hide all pages immediately to prevent flicker
+    hideAllPages();
+    
+    // Setup auth observer
     setupAuthObserver();
     
     // Then initialize the rest of the app
