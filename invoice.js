@@ -1,4 +1,3 @@
-// Invoice Management Functions
 // Invoice Number Generation System
 let lastInvoiceNumber = 0;
 let currentYear = new Date().getFullYear();
