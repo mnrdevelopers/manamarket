@@ -515,7 +515,6 @@ function printInvoice(invoiceId) {
                 // Generate products table rows
                 let productsRows = '';
                 let serialNumber = 1;
-                let totalQuantity = 0;
                 
                 invoice.products.forEach((product) => {
                     if (product.name && product.name.trim() !== '') {
@@ -530,7 +529,6 @@ function printInvoice(invoiceId) {
                             </tr>
                         `;
                         serialNumber++;
-                        totalQuantity += product.quantity || 0;
                     }
                 });
                 
@@ -543,22 +541,13 @@ function printInvoice(invoiceId) {
                     <head>
                         <title>Invoice - SHIVAM INDANE GAS</title>
                         <style>
-                            @media print {
-                                body { 
-                                    margin: 0; 
-                                    padding: 15px;
-                                    font-family: Arial, sans-serif;
-                                    color: #000;
-                                    background: white;
-                                }
-                                .no-print { display: none !important; }
-                                .page-break { page-break-after: always; }
-                            }
-                            @media screen {
-                                body { 
-                                    margin: 20px; 
-                                    font-family: Arial, sans-serif;
-                                }
+                            body { 
+                                margin: 0; 
+                                padding: 20px;
+                                font-family: Arial, sans-serif;
+                                color: #000;
+                                background: white;
+                                line-height: 1.4;
                             }
                             .invoice-container { 
                                 max-width: 800px; 
@@ -568,84 +557,112 @@ function printInvoice(invoiceId) {
                             .header { 
                                 display: flex; 
                                 justify-content: space-between; 
+                                align-items: flex-start;
                                 margin-bottom: 30px; 
-                                padding-bottom: 15px; 
+                                padding-bottom: 20px; 
                                 border-bottom: 2px solid #000; 
                             }
-                            .company-info h2 { 
-                                margin: 0 0 5px 0; 
-                                font-size: 24px; 
+                            .company-info h1 { 
+                                margin: 0 0 8px 0; 
+                                font-size: 28px; 
                                 color: #000;
+                                font-weight: bold;
+                            }
+                            .company-info p { 
+                                margin: 3px 0; 
+                                font-size: 14px;
                             }
                             .invoice-meta { 
                                 text-align: right; 
                             }
-                            .invoice-meta h3 { 
-                                margin: 0 0 10px 0; 
-                                font-size: 20px; 
+                            .invoice-meta h2 { 
+                                margin: 0 0 15px 0; 
+                                font-size: 24px; 
                                 color: #000;
+                                font-weight: bold;
+                            }
+                            .invoice-meta p { 
+                                margin: 5px 0; 
+                                font-size: 14px;
+                            }
+                            .customer-info {
+                                margin-bottom: 25px;
+                                padding: 15px;
+                                background: #f8f8f8;
+                                border-radius: 5px;
+                            }
+                            .customer-info h3 {
+                                margin: 0 0 10px 0;
+                                font-size: 16px;
+                                color: #000;
+                            }
+                            .customer-info p {
+                                margin: 3px 0;
+                                font-size: 14px;
                             }
                             table { 
                                 width: 100%; 
                                 border-collapse: collapse; 
-                                margin: 20px 0; 
+                                margin: 25px 0; 
                                 font-size: 14px;
                             }
-                            th, td { 
-                                border: 1px solid #000; 
-                                padding: 10px; 
-                            }
                             th { 
-                                background: #f8f8f8; 
+                                background: #333; 
+                                color: white;
                                 font-weight: bold; 
                                 text-align: left;
+                                border: 1px solid #000;
+                                padding: 12px 8px;
+                            }
+                            td { 
+                                border: 1px solid #000; 
+                                padding: 10px 8px;
+                                background: white;
                             }
                             .totals { 
-                                width: 300px; 
+                                width: 350px; 
                                 margin-left: auto; 
                                 background: #f8f8f8; 
-                                padding: 15px; 
-                                border: 1px solid #000; 
+                                padding: 20px; 
+                                border: 2px solid #000; 
+                                border-radius: 5px;
                             }
                             .totals-row { 
                                 display: flex; 
                                 justify-content: space-between; 
-                                margin-bottom: 8px; 
+                                margin-bottom: 10px; 
+                                font-size: 15px;
                             }
                             .total { 
                                 font-weight: bold; 
-                                font-size: 16px; 
+                                font-size: 18px; 
                                 border-top: 2px solid #000; 
-                                padding-top: 8px; 
-                                margin-top: 8px; 
+                                padding-top: 12px; 
+                                margin-top: 12px; 
                             }
                             .footer { 
                                 margin-top: 40px; 
                                 text-align: center; 
-                                padding-top: 15px;
+                                padding-top: 20px;
                                 border-top: 1px solid #ccc;
+                                font-size: 14px;
                             }
-                            .print-btn { 
-                                padding: 10px 20px; 
-                                background: #007bff; 
-                                color: white; 
-                                border: none; 
-                                border-radius: 4px; 
-                                cursor: pointer; 
-                                margin: 10px 5px;
+                            .no-print { 
+                                display: none !important; 
                             }
-                            .close-btn { 
-                                padding: 10px 20px; 
-                                background: #6c757d; 
-                                color: white; 
-                                border: none; 
-                                border-radius: 4px; 
-                                cursor: pointer; 
-                                margin: 10px 5px;
-                            }
-                            .button-container {
-                                text-align: center;
-                                margin-top: 20px;
+                            
+                            /* Print-specific styles */
+                            @media print {
+                                body { 
+                                    margin: 0.5in; 
+                                    padding: 0;
+                                }
+                                .no-print { 
+                                    display: none !important; 
+                                }
+                                .invoice-container {
+                                    max-width: 100%;
+                                }
                             }
                         </style>
                     </head>
@@ -654,35 +671,36 @@ function printInvoice(invoiceId) {
                             <!-- Header -->
                             <div class="header">
                                 <div class="company-info">
-                                    <h2>SHIVAM INDANE GAS</h2>
+                                    <h1>SHIVAM INDANE GAS</h1>
                                     <p><strong>Professional Gas Services</strong></p>
                                     <p>123 Business Street, City, State 12345</p>
                                     <p>Phone: +91 98765 43210 | Email: info@shivamindanegas.com</p>
+                                    <p>GSTIN: 07AABCU9603R1ZM</p>
                                 </div>
                                 <div class="invoice-meta">
-                                    <h3>INVOICE</h3>
-                                    <p><strong>Invoice #:</strong> ${invoiceId}</p>
+                                    <h2>TAX INVOICE</h2>
+                                    <p><strong>Invoice No:</strong> ${invoiceId}</p>
                                     <p><strong>Date:</strong> ${invoiceDate}</p>
                                 </div>
                             </div>
                             
                             <!-- Customer Information -->
                             <div class="customer-info">
-                                <h4 style="margin-bottom: 10px;">Bill To:</h4>
-                                <p style="margin: 5px 0;"><strong>${invoice.customerName}</strong></p>
-                                <p style="margin: 5px 0;">Mobile: ${invoice.customerMobile}</p>
+                                <h3>Bill To:</h3>
+                                <p><strong>${invoice.customerName}</strong></p>
+                                <p><strong>Mobile:</strong> ${invoice.customerMobile}</p>
                             </div>
                             
                             <!-- Products Table -->
                             <table>
                                 <thead>
                                     <tr>
-                                        <th style="width: 5%;">#</th>
-                                        <th style="width: 35%;">Product/Service</th>
+                                        <th style="width: 5%; text-align: center;">Sr No.</th>
+                                        <th style="width: 35%;">Product Description</th>
                                         <th style="width: 10%; text-align: center;">Qty</th>
-                                        <th style="width: 15%; text-align: right;">Price (₹)</th>
+                                        <th style="width: 15%; text-align: right;">Rate (₹)</th>
                                         <th style="width: 10%; text-align: center;">GST %</th>
-                                        <th style="width: 15%; text-align: right;">Total (₹)</th>
+                                        <th style="width: 15%; text-align: right;">Amount (₹)</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -693,29 +711,31 @@ function printInvoice(invoiceId) {
                             <!-- Totals Section -->
                             <div class="totals">
                                 <div class="totals-row">
-                                    <span>Subtotal:</span>
-                                    <span>₹${invoice.subtotal.toFixed(2)}</span>
+                                    <span><strong>Subtotal:</strong></span>
+                                    <span><strong>₹${invoice.subtotal.toFixed(2)}</strong></span>
                                 </div>
                                 <div class="totals-row">
-                                    <span>GST Total:</span>
-                                    <span>₹${invoice.gstAmount.toFixed(2)}</span>
+                                    <span><strong>GST Amount:</strong></span>
+                                    <span><strong>₹${invoice.gstAmount.toFixed(2)}</strong></span>
                                 </div>
                                 <div class="totals-row total">
-                                    <span>Grand Total:</span>
-                                    <span>₹${invoice.grandTotal.toFixed(2)}</span>
+                                    <span><strong>Grand Total:</strong></span>
+                                    <span><strong>₹${invoice.grandTotal.toFixed(2)}</strong></span>
                                 </div>
                             </div>
                             
                             <!-- Footer -->
                             <div class="footer">
                                 <p><strong>Thank you for your business!</strong></p>
-                                <p>Terms: Payment due within 30 days</p>
+                                <p><strong>Terms:</strong> Payment due within 30 days</p>
+                                <p><strong>Bank Details:</strong> State Bank of India | A/C: 12345678901 | IFSC: SBIN0000123</p>
+                                <p><strong>Authorized Signatory</strong></p>
                             </div>
                             
                             <!-- Print Buttons (hidden when printing) -->
-                            <div class="button-container no-print">
-                                <button class="print-btn" onclick="window.print()">🖨️ Print Invoice</button>
-                                <button class="close-btn" onclick="window.close()">✕ Close Window</button>
+                            <div class="button-container no-print" style="text-align: center; margin-top: 30px;">
+                                <button class="print-btn" onclick="window.print()" style="padding: 12px 25px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; margin: 10px; font-size: 16px;">🖨️ Print Invoice</button>
+                                <button class="close-btn" onclick="window.close()" style="padding: 12px 25px; background: #6c757d; color: white; border: none; border-radius: 5px; cursor: pointer; margin: 10px; font-size: 16px;">✕ Close Window</button>
                             </div>
                         </div>
                         
@@ -723,7 +743,7 @@ function printInvoice(invoiceId) {
                             // Auto-print after a short delay
                             setTimeout(() => {
                                 window.print();
-                            }, 500);
+                            }, 1000);
                         </script>
                     </body>
                     </html>
@@ -738,5 +758,4 @@ function printInvoice(invoiceId) {
         .catch((error) => {
             showMessage('Error loading invoice: ' + error.message, 'error');
         });
-   }
-});
+}
