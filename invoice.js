@@ -60,7 +60,7 @@ function createMessageElement() {
 
 // Generate professional invoice number
 function generateInvoiceNumber() {
-    const user = auth.currentUser;
+    const user = getAuth().currentUser;
     if (!user) return 'INV-XXXX-XXXX';
     
     const timestamp = Date.now();
