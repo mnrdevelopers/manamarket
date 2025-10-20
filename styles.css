@@ -1459,3 +1459,10 @@ body {
     z-index: 9999;
     color: white;
 }
+
+/* Hide the invoice message element permanently */
+#invoice-message {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+}
