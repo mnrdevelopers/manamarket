@@ -743,4 +743,5 @@ function printInvoice(invoiceId) {
         .catch((error) => {
             showMessage('Error loading invoice: ' + error.message, 'error');
         });
-}
+   }
+});
