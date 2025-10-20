@@ -117,25 +117,25 @@ function setupNavigation() {
         }
     });
     
-  // Create invoice navigation
-const createInvoiceNav1 = document.getElementById('create-invoice-nav');
-const createInvoiceNav2 = document.getElementById('create-invoice-nav-2');
-const createInvoiceNav3 = document.getElementById('create-invoice-nav-3');
-const createInvoiceNav4 = document.getElementById('create-invoice-nav-4');
+    // Create invoice navigation
+    const createInvoiceNav1 = document.getElementById('create-invoice-nav');
+    const createInvoiceNav2 = document.getElementById('create-invoice-nav-2');
+    const createInvoiceNav3 = document.getElementById('create-invoice-nav-3');
+    const createInvoiceNav4 = document.getElementById('create-invoice-nav-4');
 
-[createInvoiceNav1, createInvoiceNav2, createInvoiceNav3, createInvoiceNav4].forEach((nav, index) => {
-    if (nav) {
-        nav.addEventListener('click', function(e) {
-            e.preventDefault();
-            console.log('Create invoice nav clicked', index + 1);
-            showPage('invoice-page');
-            // Refresh available products when switching to invoice page
-            if (typeof loadAvailableProducts === 'function') {
-                setTimeout(loadAvailableProducts, 100);
-            }
-        });
-    }
-});
+    [createInvoiceNav1, createInvoiceNav2, createInvoiceNav3, createInvoiceNav4].forEach((nav, index) => {
+        if (nav) {
+            nav.addEventListener('click', function(e) {
+                e.preventDefault();
+                console.log('Create invoice nav clicked', index + 1);
+                showPage('invoice-page');
+                // Refresh available products when switching to invoice page
+                if (typeof loadAvailableProducts === 'function') {
+                    setTimeout(loadAvailableProducts, 100);
+                }
+            });
+        }
+    });
     
     // Invoices list navigation
     const invoicesNav1 = document.getElementById('invoices-list-nav');
@@ -157,7 +157,7 @@ const createInvoiceNav4 = document.getElementById('create-invoice-nav-4');
         }
     });
 
-    // Stock management navigation - COMPLETE VERSION
+    // Stock management navigation
     const stockNav1 = document.getElementById('stock-management-nav');
     const stockNav2 = document.getElementById('stock-management-nav-2');
     const stockNav3 = document.getElementById('stock-management-nav-3');
@@ -317,51 +317,6 @@ function loadDashboardData() {
         });
 }
 
-// Enhanced authentication state observer
-function setupAuthObserver() {
-    if (typeof auth !== 'undefined') {
-        auth.onAuthStateChanged((user) => {
-            console.log('=== AUTH STATE CHANGED ===');
-            console.log('User:', user);
-            
-            if (user) {
-                // User is signed in
-                console.log('User signed in, showing dashboard');
-                showPage('dashboard-page');
-                
-                // Load dashboard data after a short delay
-                setTimeout(() => {
-                    if (typeof loadDashboardData === 'function') {
-                        loadDashboardData();
-                    }
-                }, 500);
-            } else {
-                // User is signed out
-                console.log('User signed out, showing login page');
-                showPage('login-page');
-            }
-            
-            // Hide loading screen after auth check
-            setTimeout(() => {
-                const loadingScreen = document.getElementById('loading-screen');
-                if (loadingScreen) {
-                    loadingScreen.classList.add('hidden');
-                }
-            }, 300);
-        });
-    } else {
-        console.error('Firebase auth not available');
-        // Fallback: show login page after timeout
-        setTimeout(() => {
-            showPage('login-page');
-            const loadingScreen = document.getElementById('loading-screen');
-            if (loadingScreen) {
-                loadingScreen.classList.add('hidden');
-            }
-        }, 1000);
-    }
-}
-
 // Initialize the application when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
     console.log('DOM loaded, checking authentication...');
@@ -369,9 +324,23 @@ document.addEventListener('DOMContentLoaded', function() {
     // Hide all pages immediately to prevent flicker
     hideAllPages();
     
-    // Setup auth observer
-    setupAuthObserver();
+    // Auth observer in auth.js will handle the rest
+    // It will either:
+    // 1. Redirect to auth.html if not authenticated
+    // 2. Initialize the app if authenticated
     
-    // Then initialize the rest of the app
-    setTimeout(initApp, 300);
+    // Check if user is already authenticated
+    if (auth.currentUser) {
+        console.log('User already authenticated, initializing app');
+        initApp();
+    } else {
+        console.log('No user authenticated, auth observer will handle redirect');
+        // Hide loading screen after a timeout
+        setTimeout(() => {
+            const loadingScreen = document.getElementById('loading-screen');
+            if (loadingScreen) {
+                loadingScreen.classList.add('hidden');
+            }
+        }, 1000);
+    }
 });
