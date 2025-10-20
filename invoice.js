@@ -246,7 +246,6 @@ function loadRecentInvoices() {
                     <div class="invoice-amount">₹${invoice.grandTotal.toFixed(2)}</div>
                     <div class="invoice-actions">
                         <button class="btn-secondary view-invoice-btn" data-id="${invoice.id}">View</button>
-                        <button class="btn-primary print-invoice-btn" data-id="${invoice.id}">Print</button>
                     </div>
                 `;
                 
