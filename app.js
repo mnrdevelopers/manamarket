@@ -272,14 +272,28 @@ function loadDashboardData() {
 
     console.log('Loading dashboard data for user:', user.uid);
 
-    // Load recent invoices
+    // Load recent invoices with error handling
     if (typeof loadRecentInvoices === 'function') {
-        loadRecentInvoices();
+        try {
+            loadRecentInvoices();
+        } catch (error) {
+            console.error('Error loading recent invoices:', error);
+            const invoicesList = document.getElementById('invoices-list');
+            if (invoicesList) {
+                invoicesList.innerHTML = '<p>Error loading invoices</p>';
+            }
+        }
     } else {
         console.log('loadRecentInvoices function not available yet');
+        // Try again after a short delay
+        setTimeout(() => {
+            if (typeof loadRecentInvoices === 'function') {
+                loadRecentInvoices();
+            }
+        }, 500);
     }
-
-    // Get all invoices and filter locally to avoid complex queries
+    
+   // Get all invoices and filter locally to avoid complex queries
     db.collection('invoices')
         .where('createdBy', '==', user.uid)
         .get()
