@@ -907,3 +907,34 @@ html, body {
         width: 100%;
     }
 }
+
+/* Edit Modal Styles */
+#edit-products-container .product-row {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr 1fr auto;
+    gap: 15px;
+    align-items: end;
+    padding: 15px 0;
+    border-bottom: 1px solid #eee;
+}
+
+.btn-remove-edit-product {
+    background-color: #e74c3c;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+.btn-remove-edit-product:hover {
+    background-color: #c0392b;
+}
+
+@media (max-width: 768px) {
+    #edit-products-container .product-row {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+}
