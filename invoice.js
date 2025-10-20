@@ -857,14 +857,23 @@ function initInvoicePage() {
     }
 }
 
-// Check if we're on the invoice page and initialize when DOM is loaded
-document.addEventListener('DOMContentLoaded', () => {
+// Safe initialization for invoice page
+function initInvoicePageSafely() {
+    // Wait for auth to be available
+    if (typeof auth === 'undefined' || !auth) {
+        setTimeout(initInvoicePageSafely, 100);
+        return;
+    }
+    
     // Only initialize if we're on the invoice page and user is authenticated
     if (document.getElementById('invoice-page') && auth.currentUser) {
         console.log('Invoice page detected, initializing...');
         initInvoicePage();
     }
-});
+}
+
+// Check if we're on the invoice page and initialize when DOM is loaded
+document.addEventListener('DOMContentLoaded', initInvoicePageSafely);
 
 // Also initialize when the page becomes visible (for single page app navigation)
 document.addEventListener('visibilitychange', function() {
