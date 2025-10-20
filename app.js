@@ -255,9 +255,11 @@ function loadDashboardData() {
     const todayInvoicesEl = document.getElementById('today-invoices');
     const monthInvoicesEl = document.getElementById('month-invoices');
     const totalRevenueEl = document.getElementById('total-revenue');
+    const invoicesList = document.getElementById('invoices-list');
     
-    if (!todayInvoicesEl || !monthInvoicesEl || !totalRevenueEl) {
-        console.log('Dashboard elements not found, skipping data load');
+    if (!todayInvoicesEl || !monthInvoicesEl || !totalRevenueEl || !invoicesList) {
+        console.log('Dashboard elements not found, retrying...');
+        setTimeout(loadDashboardData, 100);
         return;
     }
     
@@ -267,33 +269,16 @@ function loadDashboardData() {
         todayInvoicesEl.textContent = '0';
         monthInvoicesEl.textContent = '0';
         totalRevenueEl.textContent = '₹0';
+        invoicesList.innerHTML = '<p>Please log in to view invoices</p>';
         return;
     }
 
     console.log('Loading dashboard data for user:', user.uid);
 
-    // Load recent invoices with error handling
-    if (typeof loadRecentInvoices === 'function') {
-        try {
-            loadRecentInvoices();
-        } catch (error) {
-            console.error('Error loading recent invoices:', error);
-            const invoicesList = document.getElementById('invoices-list');
-            if (invoicesList) {
-                invoicesList.innerHTML = '<p>Error loading invoices</p>';
-            }
-        }
-    } else {
-        console.log('loadRecentInvoices function not available yet');
-        // Try again after a short delay
-        setTimeout(() => {
-            if (typeof loadRecentInvoices === 'function') {
-                loadRecentInvoices();
-            }
-        }, 500);
-    }
-    
-   // Get all invoices and filter locally to avoid complex queries
+    // Load recent invoices directly (don't rely on external function)
+    loadRecentInvoicesDirectly(user);
+
+    // Get all invoices and filter locally to avoid complex queries
     db.collection('invoices')
         .where('createdBy', '==', user.uid)
         .get()
@@ -338,6 +323,76 @@ function loadDashboardData() {
             monthInvoicesEl.textContent = '0';
             totalRevenueEl.textContent = '₹0';
         });
+
+    // Direct function to load recent invoices
+    function loadRecentInvoicesDirectly(user) {
+        const invoicesList = document.getElementById('invoices-list');
+        if (!invoicesList) {
+            console.log('Invoices list not found, retrying...');
+            setTimeout(() => loadRecentInvoicesDirectly(user), 100);
+            return;
+        }
+
+        invoicesList.innerHTML = '<p>Loading invoices...</p>';
+
+        db.collection('invoices')
+            .where('createdBy', '==', user.uid)
+            .orderBy('createdAt', 'desc')
+            .limit(10)
+            .get()
+            .then((querySnapshot) => {
+                invoicesList.innerHTML = '';
+                
+                if (querySnapshot.empty) {
+                    invoicesList.innerHTML = '<p class="no-invoices">No invoices found. Create your first invoice!</p>';
+                    return;
+                }
+
+                querySnapshot.forEach((doc) => {
+                    const invoice = doc.data();
+                    const invoiceDate = invoice.createdAt ? 
+                        invoice.createdAt.toDate().toLocaleDateString() : 'Date not available';
+                    
+                    const invoiceItem = document.createElement('div');
+                    invoiceItem.className = 'invoice-item';
+                    invoiceItem.innerHTML = `
+                        <div class="invoice-customer">${invoice.customerName}</div>
+                        <div class="invoice-mobile">${invoice.customerMobile}</div>
+                        <div class="invoice-date">${invoiceDate}</div>
+                        <div class="invoice-amount">₹${invoice.grandTotal.toFixed(2)}</div>
+                        <div class="invoice-actions">
+                            <button class="btn-secondary view-invoice-btn" data-id="${doc.id}">View</button>
+                        </div>
+                    `;
+                    
+                    invoicesList.appendChild(invoiceItem);
+                });
+
+                // Add event listeners to view buttons
+                document.querySelectorAll('.view-invoice-btn').forEach(button => {
+                    button.addEventListener('click', function() {
+                        const invoiceId = this.getAttribute('data-id');
+                        // Use the viewInvoice function from invoices.js if available
+                        if (typeof viewInvoice === 'function') {
+                            viewInvoice(invoiceId);
+                        } else {
+                            console.log('viewInvoice function not available for invoice:', invoiceId);
+                        }
+                    });
+                });
+            })
+            .catch((error) => {
+                console.error('Error loading recent invoices:', error);
+                if (error.code === 'failed-precondition') {
+                    // Collection doesn't exist yet - show empty state
+                    invoicesList.innerHTML = '<p class="no-invoices">No invoices found. Create your first invoice!</p>';
+                } else if (error.code === 'permission-denied') {
+                    invoicesList.innerHTML = '<p class="no-invoices">No access to invoices</p>';
+                } else {
+                    invoicesList.innerHTML = '<p class="error">Error loading invoices</p>';
+                }
+            });
+    }
 }
 
 // Initialize the application when DOM is loaded
