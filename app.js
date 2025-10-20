@@ -109,6 +109,21 @@ function setupNavigation() {
             });
         }
     });
+
+    // Add this with other navigation setups in setupNavigation() function
+const stockNav1 = document.getElementById('stock-management-nav');
+const stockNav2 = document.getElementById('stock-management-nav-2'); // You'll need to add this to other pages
+
+if (stockNav1) {
+    stockNav1.addEventListener('click', function(e) {
+        e.preventDefault();
+        console.log('Stock management nav clicked');
+        showPage('stock-page');
+        if (typeof loadAllProducts === 'function') {
+            setTimeout(loadAllProducts, 100);
+        }
+    });
+}
     
     // Quick action buttons in dashboard
     const quickCreateInvoice = document.getElementById('quick-create-invoice');
