@@ -2,6 +2,41 @@
 let lastInvoiceNumber = 0;
 let currentYear = new Date().getFullYear();
 
+// Global message display function (if not defined elsewhere)
+function showMessage(message, type) {
+    // Try to use existing message function, or create a simple one
+    const messageEl = document.getElementById('auth-message') || 
+                     document.getElementById('invoice-message') ||
+                     createMessageElement();
+    
+    if (messageEl) {
+        messageEl.textContent = message;
+        messageEl.className = `message ${type}`;
+        messageEl.classList.remove('hidden');
+        
+        // Auto-hide success messages after 3 seconds
+        if (type === 'success') {
+            setTimeout(() => {
+                messageEl.classList.add('hidden');
+            }, 3000);
+        }
+    } else {
+        // Fallback: use alert for errors
+        if (type === 'error') {
+            alert(`Error: ${message}`);
+        }
+    }
+}
+
+// Create message element if it doesn't exist
+function createMessageElement() {
+    const messageEl = document.createElement('div');
+    messageEl.id = 'invoice-message';
+    messageEl.className = 'message hidden';
+    document.body.appendChild(messageEl);
+    return messageEl;
+}
+
 // Generate professional invoice number
 function generateInvoiceNumber() {
     const user = auth.currentUser;
@@ -51,16 +86,27 @@ async function getNextInvoiceNumber() {
 }
 
 // Initialize invoice form functionality
-// Initialize invoice form functionality
 function initInvoiceForm() {
+    console.log('Initializing invoice form...');
+    
+    // Check if required elements exist
+    const addProductBtn = document.getElementById('add-product-btn');
+    const productsContainer = document.getElementById('products-container');
+    const invoiceForm = document.getElementById('invoice-form');
+    
+    if (!addProductBtn || !productsContainer || !invoiceForm) {
+        console.error('Required invoice form elements not found');
+        return;
+    }
+    
     // Add product row
-    document.getElementById('add-product-btn').addEventListener('click', addProductRow);
+    addProductBtn.addEventListener('click', addProductRow);
     
     // Calculate totals when inputs change
-    document.getElementById('products-container').addEventListener('input', calculateTotals);
+    productsContainer.addEventListener('input', calculateTotals);
     
     // Handle form submission
-    document.getElementById('invoice-form').addEventListener('submit', saveInvoice);
+    invoiceForm.addEventListener('submit', saveInvoice);
     
     // Initialize product search
     initProductSearch();
@@ -95,6 +141,8 @@ async function displayNextInvoiceNumber() {
 // Add a new product row to the invoice form
 function addProductRow() {
     const productsContainer = document.getElementById('products-container');
+    if (!productsContainer) return;
+    
     const productRow = document.createElement('div');
     productRow.className = 'product-row';
     productRow.innerHTML = `
@@ -178,9 +226,13 @@ function calculateTotals() {
     });
     
     // Update summary
-    document.getElementById('subtotal-amount').textContent = `₹${subtotal.toFixed(2)}`;
-    document.getElementById('gst-amount').textContent = `₹${gstTotal.toFixed(2)}`;
-    document.getElementById('grand-total').textContent = `₹${grandTotal.toFixed(2)}`;
+    const subtotalEl = document.getElementById('subtotal-amount');
+    const gstEl = document.getElementById('gst-amount');
+    const grandTotalEl = document.getElementById('grand-total');
+    
+    if (subtotalEl) subtotalEl.textContent = `₹${subtotal.toFixed(2)}`;
+    if (gstEl) gstEl.textContent = `₹${gstTotal.toFixed(2)}`;
+    if (grandTotalEl) grandTotalEl.textContent = `₹${grandTotal.toFixed(2)}`;
 }
 
 // Save invoice to Firestore
@@ -200,30 +252,45 @@ async function saveInvoice(e) {
     const customerName = document.getElementById('customer-name').value;
     const customerMobile = document.getElementById('customer-mobile').value;
     
+    if (!customerName || !customerMobile) {
+        showMessage('Please fill in customer details', 'error');
+        return;
+    }
+    
     // Get products
     const products = [];
     const productRows = document.querySelectorAll('.product-row');
     
+    let hasValidProducts = false;
     productRows.forEach(row => {
         const productName = row.querySelector('.product-name').value;
-        const quantity = parseFloat(row.querySelector('.product-quantity').value);
-        const price = parseFloat(row.querySelector('.product-price').value);
-        const gst = parseFloat(row.querySelector('.product-gst').value);
-        const total = parseFloat(row.querySelector('.product-total').value.replace('₹', ''));
+        const quantity = parseFloat(row.querySelector('.product-quantity').value) || 0;
+        const price = parseFloat(row.querySelector('.product-price').value) || 0;
+        const gst = parseFloat(row.querySelector('.product-gst').value) || 0;
+        const totalElement = row.querySelector('.product-total').value;
+        const total = totalElement ? parseFloat(totalElement.replace('₹', '')) : 0;
         
-        products.push({
-            name: productName,
-            quantity: quantity,
-            price: price,
-            gst: gst,
-            total: total
-        });
+        if (productName.trim() && quantity > 0 && price > 0) {
+            products.push({
+                name: productName,
+                quantity: quantity,
+                price: price,
+                gst: gst,
+                total: total
+            });
+            hasValidProducts = true;
+        }
     });
     
+    if (!hasValidProducts) {
+        showMessage('Please add at least one valid product', 'error');
+        return;
+    }
+    
     // Calculate totals
-    const subtotal = parseFloat(document.getElementById('subtotal-amount').textContent.replace('₹', ''));
-    const gstAmount = parseFloat(document.getElementById('gst-amount').textContent.replace('₹', ''));
-    const grandTotal = parseFloat(document.getElementById('grand-total').textContent.replace('₹', ''));
+    const subtotal = parseFloat(document.getElementById('subtotal-amount').textContent.replace('₹', '')) || 0;
+    const gstAmount = parseFloat(document.getElementById('gst-amount').textContent.replace('₹', '')) || 0;
+    const grandTotal = parseFloat(document.getElementById('grand-total').textContent.replace('₹', '')) || 0;
     
     // Create invoice object with invoice number
     const invoice = {
@@ -251,8 +318,12 @@ async function saveInvoice(e) {
         
         // Redirect to dashboard after a short delay
         setTimeout(() => {
-            showPage('dashboard-page');
-            loadDashboardData();
+            if (typeof showPage === 'function') {
+                showPage('dashboard-page');
+            }
+            if (typeof loadDashboardData === 'function') {
+                loadDashboardData();
+            }
         }, 2000);
     } catch (error) {
         showMessage('Error saving invoice: ' + error.message, 'error');
@@ -261,7 +332,10 @@ async function saveInvoice(e) {
 
 // Reset invoice form
 function resetInvoiceForm() {
-    document.getElementById('invoice-form').reset();
+    const invoiceForm = document.getElementById('invoice-form');
+    if (!invoiceForm) return;
+    
+    invoiceForm.reset();
     
     // Remove all but one product row
     const productRows = document.querySelectorAll('.product-row');
@@ -271,11 +345,13 @@ function resetInvoiceForm() {
     
     // Reset the first product row
     const firstRow = document.querySelector('.product-row');
-    firstRow.querySelector('.product-name').value = '';
-    firstRow.querySelector('.product-quantity').value = '1';
-    firstRow.querySelector('.product-price').value = '';
-    firstRow.querySelector('.product-gst').value = '18';
-    firstRow.querySelector('.product-total').value = '';
+    if (firstRow) {
+        firstRow.querySelector('.product-name').value = '';
+        firstRow.querySelector('.product-quantity').value = '1';
+        firstRow.querySelector('.product-price').value = '';
+        firstRow.querySelector('.product-gst').value = '18';
+        firstRow.querySelector('.product-total').value = '';
+    }
     
     // Reset totals
     calculateTotals();
@@ -287,6 +363,8 @@ function loadRecentInvoices() {
     if (!user) return;
 
     const invoicesList = document.getElementById('invoices-list');
+    if (!invoicesList) return;
+
     invoicesList.innerHTML = '<p>Loading invoices...</p>';
 
     db.collection('invoices')
@@ -338,18 +416,11 @@ function loadRecentInvoices() {
                 invoicesList.appendChild(invoiceItem);
             });
 
-            // Add event listeners to view and print buttons
+            // Add event listeners to view buttons
             document.querySelectorAll('.view-invoice-btn').forEach(button => {
                 button.addEventListener('click', function() {
                     const invoiceId = this.getAttribute('data-id');
                     viewInvoice(invoiceId);
-                });
-            });
-            
-            document.querySelectorAll('.print-invoice-btn').forEach(button => {
-                button.addEventListener('click', function() {
-                    const invoiceId = this.getAttribute('data-id');
-                    printInvoice(invoiceId);
                 });
             });
         })
@@ -398,6 +469,7 @@ function printInvoice(invoiceId) {
 // Generate clean professional invoice preview
 function generateInvoicePreview(invoice, invoiceId, isPreview = false) {
     const previewContent = document.getElementById('invoice-preview-content');
+    if (!previewContent) return;
     
     // Format date
     let invoiceDate;
@@ -416,18 +488,20 @@ function generateInvoicePreview(invoice, invoiceId, isPreview = false) {
     
     // Generate products table rows
     let productsRows = '';
-    invoice.products.forEach((product, index) => {
-        productsRows += `
-            <tr>
-                <td>${index + 1}</td>
-                <td>${product.name}</td>
-                <td>${product.quantity}</td>
-                <td>₹${product.price.toFixed(2)}</td>
-                <td>${product.gst}%</td>
-                <td>₹${product.total.toFixed(2)}</td>
-            </tr>
-        `;
-    });
+    if (invoice.products && invoice.products.length > 0) {
+        invoice.products.forEach((product, index) => {
+            productsRows += `
+                <tr>
+                    <td>${index + 1}</td>
+                    <td>${product.name}</td>
+                    <td>${product.quantity}</td>
+                    <td>₹${product.price.toFixed(2)}</td>
+                    <td>${product.gst}%</td>
+                    <td>₹${product.total.toFixed(2)}</td>
+                </tr>
+            `;
+        });
+    }
     
     previewContent.innerHTML = `
         <div class="invoice-preview-content">
@@ -504,90 +578,6 @@ function generateInvoicePreview(invoice, invoiceId, isPreview = false) {
         </div>
     `;
 }
-
-// Initialize invoice functionality when DOM is loaded
-document.addEventListener('DOMContentLoaded', () => {
-    // Only initialize if we're on the main app and user is authenticated
-    if (document.getElementById('invoice-page') && auth.currentUser) {
-        initInvoiceForm();
-    
-        // Setup invoice preview modal
-        document.getElementById('preview-invoice-btn').addEventListener('click', function() {
-        // Validate form before preview
-        const customerName = document.getElementById('customer-name').value;
-        const customerMobile = document.getElementById('customer-mobile').value;
-        
-        if (!customerName || !customerMobile) {
-            showMessage('Please fill in customer details before previewing', 'error');
-            return;
-        }
-        
-        // Validate at least one product has data
-        const productRows = document.querySelectorAll('.product-row');
-        let hasValidProduct = false;
-        
-        productRows.forEach(row => {
-            const productName = row.querySelector('.product-name').value;
-            if (productName.trim()) {
-                hasValidProduct = true;
-            }
-        });
-        
-        if (!hasValidProduct) {
-            showMessage('Please add at least one product before previewing', 'error');
-            return;
-        }
-        
-        // Create a temporary invoice object for preview
-        const tempInvoice = {
-            customerName: customerName,
-            customerMobile: customerMobile,
-            products: [],
-            subtotal: parseFloat(document.getElementById('subtotal-amount').textContent.replace('₹', '')) || 0,
-            gstAmount: parseFloat(document.getElementById('gst-amount').textContent.replace('₹', '')) || 0,
-            grandTotal: parseFloat(document.getElementById('grand-total').textContent.replace('₹', '')) || 0,
-            createdAt: new Date()
-        };
-        
-        // Get products from form
-        productRows.forEach(row => {
-            const productName = row.querySelector('.product-name').value;
-            const quantity = parseFloat(row.querySelector('.product-quantity').value) || 0;
-            const price = parseFloat(row.querySelector('.product-price').value) || 0;
-            const gst = parseFloat(row.querySelector('.product-gst').value) || 0;
-            const totalElement = row.querySelector('.product-total').value;
-            const total = totalElement ? parseFloat(totalElement.replace('₹', '')) : 0;
-            
-            if (productName.trim()) {
-                tempInvoice.products.push({
-                    name: productName,
-                    quantity: quantity,
-                    price: price,
-                    gst: gst,
-                    total: total
-                });
-            }
-        });
-        
-        generateInvoicePreview(tempInvoice, 'PREVIEW');
-        document.getElementById('invoice-preview-modal').classList.remove('hidden');
-    });
-    
-     // Close preview modal
-        document.getElementById('close-preview').addEventListener('click', function() {
-            document.getElementById('invoice-preview-modal').classList.add('hidden');
-        });
-    
-    document.getElementById('close-preview-btn').addEventListener('click', function() {
-            document.getElementById('invoice-preview-modal').classList.add('hidden');
-        });
-        
-        // Print invoice from preview
-        document.getElementById('print-invoice-btn').addEventListener('click', function() {
-            window.print();
-        });
-    }
-});
 
 // Product search functionality for invoice form
 function initProductSearch() {
@@ -773,3 +763,118 @@ window.loadAvailableProducts = function() {
             window.availableProducts = [];
         });
 }
+
+// Initialize invoice functionality when invoice page becomes active
+function initInvoicePage() {
+    console.log('Initializing invoice page...');
+    initInvoiceForm();
+    
+    // Setup invoice preview modal
+    const previewBtn = document.getElementById('preview-invoice-btn');
+    const closePreview = document.getElementById('close-preview');
+    const closePreviewBtn = document.getElementById('close-preview-btn');
+    const printBtn = document.getElementById('print-invoice-btn');
+    
+    if (previewBtn) {
+        previewBtn.addEventListener('click', function() {
+            // Validate form before preview
+            const customerName = document.getElementById('customer-name').value;
+            const customerMobile = document.getElementById('customer-mobile').value;
+            
+            if (!customerName || !customerMobile) {
+                showMessage('Please fill in customer details before previewing', 'error');
+                return;
+            }
+            
+            // Validate at least one product has data
+            const productRows = document.querySelectorAll('.product-row');
+            let hasValidProduct = false;
+            
+            productRows.forEach(row => {
+                const productName = row.querySelector('.product-name').value;
+                if (productName.trim()) {
+                    hasValidProduct = true;
+                }
+            });
+            
+            if (!hasValidProduct) {
+                showMessage('Please add at least one product before previewing', 'error');
+                return;
+            }
+            
+            // Create a temporary invoice object for preview
+            const tempInvoice = {
+                customerName: customerName,
+                customerMobile: customerMobile,
+                products: [],
+                subtotal: parseFloat(document.getElementById('subtotal-amount').textContent.replace('₹', '')) || 0,
+                gstAmount: parseFloat(document.getElementById('gst-amount').textContent.replace('₹', '')) || 0,
+                grandTotal: parseFloat(document.getElementById('grand-total').textContent.replace('₹', '')) || 0,
+                createdAt: new Date()
+            };
+            
+            // Get products from form
+            productRows.forEach(row => {
+                const productName = row.querySelector('.product-name').value;
+                const quantity = parseFloat(row.querySelector('.product-quantity').value) || 0;
+                const price = parseFloat(row.querySelector('.product-price').value) || 0;
+                const gst = parseFloat(row.querySelector('.product-gst').value) || 0;
+                const totalElement = row.querySelector('.product-total').value;
+                const total = totalElement ? parseFloat(totalElement.replace('₹', '')) : 0;
+                
+                if (productName.trim()) {
+                    tempInvoice.products.push({
+                        name: productName,
+                        quantity: quantity,
+                        price: price,
+                        gst: gst,
+                        total: total
+                    });
+                }
+            });
+            
+            generateInvoicePreview(tempInvoice, 'PREVIEW');
+            document.getElementById('invoice-preview-modal').classList.remove('hidden');
+        });
+    }
+    
+    if (closePreview) {
+        closePreview.addEventListener('click', function() {
+            document.getElementById('invoice-preview-modal').classList.add('hidden');
+        });
+    }
+    
+    if (closePreviewBtn) {
+        closePreviewBtn.addEventListener('click', function() {
+            document.getElementById('invoice-preview-modal').classList.add('hidden');
+        });
+    }
+    
+    if (printBtn) {
+        printBtn.addEventListener('click', function() {
+            window.print();
+        });
+    }
+}
+
+// Check if we're on the invoice page and initialize when DOM is loaded
+document.addEventListener('DOMContentLoaded', () => {
+    // Only initialize if we're on the invoice page and user is authenticated
+    if (document.getElementById('invoice-page') && auth.currentUser) {
+        console.log('Invoice page detected, initializing...');
+        initInvoicePage();
+    }
+});
+
+// Also initialize when the page becomes visible (for single page app navigation)
+document.addEventListener('visibilitychange', function() {
+    if (!document.hidden && document.getElementById('invoice-page') && 
+        document.getElementById('invoice-page').classList.contains('active') && 
+        auth.currentUser) {
+        console.log('Invoice page became active, initializing...');
+        // Re-initialize product search when switching to invoice page
+        if (typeof loadAvailableProducts === 'function') {
+            loadAvailableProducts();
+        }
+    }
+});
