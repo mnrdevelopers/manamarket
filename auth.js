@@ -34,20 +34,25 @@ function showMessage(message, type) {
 function setupLogoutButtons() {
     console.log('Setting up logout buttons...');
     
-    const logoutBtn1 = document.getElementById('logout-btn');
-    const logoutBtn2 = document.getElementById('logout-btn-2');
+    const logoutButtons = [
+        'logout-btn', 'logout-btn-2', 'logout-btn-3', 'logout-btn-4'
+    ];
     
-    if (logoutBtn1) {
-        logoutBtn1.addEventListener('click', function(e) {
-            e.preventDefault();
-            console.log('Logout button 1 clicked');
-            auth.signOut().then(() => {
-                showMessage('Logged out successfully', 'success');
-            }).catch((error) => {
-                showMessage('Error logging out: ' + error.message, 'error');
+    logoutButtons.forEach(btnId => {
+        const logoutBtn = document.getElementById(btnId);
+        if (logoutBtn) {
+            logoutBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                console.log('Logout button clicked:', btnId);
+                auth.signOut().then(() => {
+                    showMessage('Logged out successfully', 'success');
+                }).catch((error) => {
+                    showMessage('Error logging out: ' + error.message, 'error');
+                });
             });
-        });
-    }
+        }
+    });
+}
     
     if (logoutBtn2) {
         logoutBtn2.addEventListener('click', function(e) {
