@@ -83,7 +83,12 @@ function initApp() {
     // Show dashboard by default
     console.log('User logged in, showing dashboard');
     showPage('dashboard-page');
-    setTimeout(loadDashboardData, 100);
+    
+    // Load dashboard data after ensuring page is visible
+    setTimeout(() => {
+        console.log('Loading dashboard data after timeout');
+        loadDashboardData();
+    }, 300);
     
     // Hide loading screen
     hideLoadingScreen();
