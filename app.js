@@ -193,6 +193,20 @@ if (stockNav1) {
             }
         });
     }
+
+    // Add this to the quick action buttons section in setupNavigation()
+const quickStockManagement = document.getElementById('quick-stock-management');
+
+if (quickStockManagement) {
+    quickStockManagement.addEventListener('click', function(e) {
+        e.preventDefault();
+        console.log('Quick stock management clicked');
+        showPage('stock-page');
+        if (typeof loadAllProducts === 'function') {
+            setTimeout(loadAllProducts, 100);
+        }
+    });
+}
     
     // Back to invoices button in create invoice page
     const backToInvoices = document.getElementById('back-to-invoices');
