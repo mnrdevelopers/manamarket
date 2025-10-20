@@ -25,6 +25,9 @@ function showPage(pageId) {
         
         // Set active state for the corresponding nav button
         setActiveNavButton(pageId);
+        
+        // Initialize page-specific functionality
+        setTimeout(initActivePage, 50);
     } else {
         console.error('Page not found:', pageId);
     }
@@ -157,24 +160,25 @@ function setupNavigation() {
         }
     });
 
-    // Stock management navigation
-    const stockNav1 = document.getElementById('stock-management-nav');
-    const stockNav2 = document.getElementById('stock-management-nav-2');
-    const stockNav3 = document.getElementById('stock-management-nav-3');
-    const stockNav4 = document.getElementById('stock-management-nav-4');
-    
-    [stockNav1, stockNav2, stockNav3, stockNav4].forEach((nav, index) => {
-        if (nav) {
-            nav.addEventListener('click', function(e) {
-                e.preventDefault();
-                console.log('Stock management nav clicked', index + 1);
-                showPage('stock-page');
-                if (typeof loadAllProducts === 'function') {
-                    setTimeout(loadAllProducts, 100);
+   // Stock management navigation
+[stockNav1, stockNav2, stockNav3, stockNav4].forEach((nav, index) => {
+    if (nav) {
+        nav.addEventListener('click', function(e) {
+            e.preventDefault();
+            console.log('Stock management nav clicked', index + 1);
+            showPage('stock-page');
+            
+            // Wait a bit for page to render, then load products
+            setTimeout(() => {
+                if (auth && auth.currentUser && typeof loadAllProducts === 'function') {
+                    loadAllProducts();
+                } else {
+                    console.log('Auth not ready or loadAllProducts not available');
                 }
-            });
-        }
-    });
+            }, 200);
+        });
+    }
+});
     
     // Quick action buttons in dashboard
     const quickCreateInvoice = document.getElementById('quick-create-invoice');
@@ -344,3 +348,30 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 1000);
     }
 });
+
+// Initialize page-specific functionality when page becomes active
+function initActivePage() {
+    const activePage = document.querySelector('.page.active');
+    if (!activePage) return;
+    
+    const pageId = activePage.id;
+    console.log('Initializing active page:', pageId);
+    
+    switch(pageId) {
+        case 'stock-page':
+            if (typeof initStockPage === 'function') {
+                setTimeout(initStockPage, 100);
+            }
+            break;
+        case 'invoice-page':
+            if (typeof initInvoicePage === 'function') {
+                setTimeout(initInvoicePage, 100);
+            }
+            break;
+        case 'invoices-page':
+            if (typeof initInvoicesPage === 'function') {
+                setTimeout(initInvoicesPage, 100);
+            }
+            break;
+    }
+}
