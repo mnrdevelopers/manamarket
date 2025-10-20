@@ -56,6 +56,13 @@ function setupStockEventListeners() {
 
 // Load all products for the current user
 function loadAllProducts() {
+    // Wait for auth to be ready
+    if (!auth || !auth.currentUser) {
+        console.log('Auth not ready, waiting...');
+        setTimeout(loadAllProducts, 100);
+        return;
+    }
+
     const user = auth.currentUser;
     if (!user) {
         showMessage('Please log in to manage products', 'error');
@@ -63,9 +70,15 @@ function loadAllProducts() {
     }
 
     const tableBody = document.getElementById('stock-table-body');
-    if (!tableBody) return;
+    if (!tableBody) {
+        console.log('Stock table body not found, retrying...');
+        setTimeout(loadAllProducts, 100);
+        return;
+    }
 
     tableBody.innerHTML = '<tr><td colspan="8" class="loading-stock">Loading products...</td></tr>';
+
+    console.log('Loading products for user:', user.uid);
 
     db.collection('products')
         .where('createdBy', '==', user.uid)
@@ -340,8 +353,42 @@ function addProductFromStock(name, price, gst) {
 
 // Initialize stock functionality when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
-    // Check if we're on the stock page and initialize
+    console.log('Stock.js loaded, checking for stock page...');
+    
+    // Check if we're on the stock page and wait for auth
     if (document.getElementById('stock-page')) {
-        initStockPage();
+        console.log('Stock page detected, waiting for auth...');
+        
+        // Wait for auth to be ready
+        const checkAuthAndInit = () => {
+            if (auth && auth.currentUser) {
+                console.log('User authenticated, initializing stock page');
+                initStockPage();
+            } else if (auth) {
+                // User not logged in but auth is ready
+                console.log('User not logged in, showing message');
+                const tableBody = document.getElementById('stock-table-body');
+                if (tableBody) {
+                    tableBody.innerHTML = '<tr><td colspan="8" class="no-products-found">Please log in to manage products</td></tr>';
+                }
+            } else {
+                // Auth not ready yet, check again
+                setTimeout(checkAuthAndInit, 100);
+            }
+        };
+        
+        checkAuthAndInit();
+    }
+});
+
+// Also initialize when page becomes active (for SPA navigation)
+document.addEventListener('visibilitychange', function() {
+    if (!document.hidden && 
+        document.getElementById('stock-page') && 
+        document.getElementById('stock-page').classList.contains('active')) {
+        console.log('Stock page became active');
+        if (auth && auth.currentUser) {
+            loadAllProducts();
+        }
     }
 });
