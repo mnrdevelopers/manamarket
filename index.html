@@ -270,6 +270,60 @@
         </div>
     </div>
 
+    <!-- Edit Invoice Modal -->
+<div id="edit-invoice-modal" class="modal hidden">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Edit Invoice</h2>
+            <button id="close-edit-modal" class="close-btn">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="edit-invoice-form" class="invoice-form">
+                <div class="customer-details">
+                    <h3>Customer Details</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="edit-customer-name">Customer Name *</label>
+                            <input type="text" id="edit-customer-name" required aria-required="true">
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-customer-mobile">Mobile Number *</label>
+                            <input type="tel" id="edit-customer-mobile" required aria-required="true">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="products-section">
+                    <h3>Products</h3>
+                    <div id="edit-products-container">
+                        <!-- Product rows will be added here dynamically -->
+                    </div>
+                    <button type="button" id="edit-add-product-btn" class="btn-secondary">Add Product</button>
+                </div>
+                
+                <div class="invoice-summary">
+                    <div class="summary-row">
+                        <span>Subtotal:</span>
+                        <span id="edit-subtotal-amount">₹0.00</span>
+                    </div>
+                    <div class="summary-row">
+                        <span>GST Total:</span>
+                        <span id="edit-gst-amount">₹0.00</span>
+                    </div>
+                    <div class="summary-row total">
+                        <span>Grand Total:</span>
+                        <span id="edit-grand-total">₹0.00</span>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button id="update-invoice-btn" class="btn-primary">Update Invoice</button>
+            <button id="cancel-edit-btn" class="btn-secondary">Cancel</button>
+        </div>
+    </div>
+</div>
+
     <!-- Scripts -->
     <script src="auth.js"></script>
     <script src="invoice.js"></script>
