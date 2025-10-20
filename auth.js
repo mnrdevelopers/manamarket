@@ -53,19 +53,6 @@ function setupLogoutButtons() {
         }
     });
 }
-    
-    if (logoutBtn2) {
-        logoutBtn2.addEventListener('click', function(e) {
-            e.preventDefault();
-            console.log('Logout button 2 clicked');
-            auth.signOut().then(() => {
-                showMessage('Logged out successfully', 'success');
-            }).catch((error) => {
-                showMessage('Error logging out: ' + error.message, 'error');
-            });
-        });
-    }
-}
 
 // Login Form Handler
 document.getElementById('login-form').addEventListener('submit', (e) => {
