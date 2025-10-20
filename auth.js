@@ -1,7 +1,3 @@
-// Make auth and db globally accessible
-window.auth = auth;
-window.db = db;
-
 // Firebase Configuration
 const firebaseConfig = {
   apiKey: "AIzaSyAvCjDqOhhWb-zXfJGlrBdL53ViOVuXPzM",
@@ -16,6 +12,10 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
+
+// Make auth and db globally accessible
+window.auth = auth;
+window.db = db;
 
 // Global message display function
 function showMessage(message, type) {
