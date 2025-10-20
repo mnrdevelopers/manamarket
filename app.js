@@ -45,7 +45,7 @@ function setActiveNavButton(pageId) {
             activeButtonId = 'invoices-list-nav-3';
             break;
         case 'stock-page':
-            activeButtonId = 'stock-management-nav-4'; // Updated this line
+            activeButtonId = 'stock-management-nav-4';
             break;
     }
     
@@ -68,20 +68,26 @@ function hideAllPages() {
 function initApp() {
     console.log('Initializing app...');
     
-    // Setup navigation first
-    setupNavigation();
-    
-    // Check auth state and show appropriate page
-    if (typeof auth !== 'undefined' && auth.currentUser) {
-        console.log('User already logged in, showing dashboard');
-        showPage('dashboard-page');
-        setTimeout(loadDashboardData, 100);
-    } else {
-        console.log('No user logged in, showing login page');
-        showPage('login-page');
+    // Check if user is authenticated
+    if (!auth.currentUser) {
+        console.log('No user logged in, redirecting will be handled by auth observer');
+        return;
     }
     
+    // Setup navigation
+    setupNavigation();
+    
+    // Show dashboard by default
+    console.log('User logged in, showing dashboard');
+    showPage('dashboard-page');
+    setTimeout(loadDashboardData, 100);
+    
     // Hide loading screen
+    hideLoadingScreen();
+}
+
+// Hide loading screen
+function hideLoadingScreen() {
     setTimeout(() => {
         const loadingScreen = document.getElementById('loading-screen');
         if (loadingScreen) {
@@ -358,7 +364,7 @@ function setupAuthObserver() {
 
 // Initialize the application when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('DOM loaded, initializing app...');
+    console.log('DOM loaded, checking authentication...');
     
     // Hide all pages immediately to prevent flicker
     hideAllPages();
