@@ -410,28 +410,6 @@
 <script src="invoice.js"></script>
 <script src="app.js"></script>
 <script src="invoices.js"></script>
-<script src="stock.js"></script> <!-- Add this line -->
-    
-    <!-- Error Handling Script -->
-    <script>
-        // Global error handler
-        window.addEventListener('error', function(e) {
-            console.error('Global error:', e.error);
-        });
-        
-        // Check if all required elements exist
-        document.addEventListener('DOMContentLoaded', function() {
-            const requiredElements = [
-                'login-page', 'dashboard-page', 'invoice-page',
-                'login-form', 'invoice-form', 'auth-message'
-            ];
-            
-            requiredElements.forEach(id => {
-                if (!document.getElementById(id)) {
-                    console.error('Missing required element:', id);
-                }
-            });
-        });
-    </script>
+<script src="stock.js"></script>
 </body>
 </html>
