@@ -529,7 +529,7 @@ function setupEditModalListeners() {
 }
 
 // View invoice details
-function viewInvoice(invoiceId) {
+window.viewInvoice = function(invoiceId) {
     db.collection('invoices').doc(invoiceId).get()
         .then((doc) => {
             if (doc.exists) {
@@ -542,7 +542,7 @@ function viewInvoice(invoiceId) {
         .catch((error) => {
             showMessage('Error loading invoice: ' + error.message, 'error');
         });
-}
+};
 
 // Safe initialization for invoices page
 function initInvoicesPageSafely() {
@@ -559,19 +559,3 @@ function initInvoicesPageSafely() {
 }
 
 document.addEventListener('DOMContentLoaded', initInvoicesPageSafely);
-
-// Make viewInvoice function globally accessible
-window.viewInvoice = function(invoiceId) {
-    db.collection('invoices').doc(invoiceId).get()
-        .then((doc) => {
-            if (doc.exists) {
-                generateInvoicePreview(doc.data(), doc.id);
-                document.getElementById('invoice-preview-modal').classList.remove('hidden');
-            } else {
-                showMessage('Invoice not found', 'error');
-            }
-        })
-        .catch((error) => {
-            showMessage('Error loading invoice: ' + error.message, 'error');
-        });
-};
