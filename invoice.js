@@ -1,4 +1,55 @@
 // Invoice Management Functions
+// Invoice Number Generation System
+let lastInvoiceNumber = 0;
+let currentYear = new Date().getFullYear();
+
+// Generate professional invoice number
+function generateInvoiceNumber() {
+    const user = auth.currentUser;
+    if (!user) return 'INV-XXXX-XXXX';
+    
+    const timestamp = Date.now();
+    const random = Math.floor(Math.random() * 1000);
+    const year = currentYear.toString().slice(-2);
+    
+    // Format: INV-YY-XXXX
+    return `INV-${year}-${(timestamp % 10000).toString().padStart(4, '0')}`;
+}
+
+// Get next invoice number from Firestore
+async function getNextInvoiceNumber() {
+    const user = auth.currentUser;
+    if (!user) return generateInvoiceNumber();
+    
+    try {
+        // Try to get the latest invoice number
+        const snapshot = await db.collection('invoices')
+            .where('createdBy', '==', user.uid)
+            .orderBy('invoiceNumber', 'desc')
+            .limit(1)
+            .get();
+        
+        if (snapshot.empty) {
+            // First invoice for this user
+            return `INV-${currentYear.toString().slice(-2)}-0001`;
+        }
+        
+        const lastInvoice = snapshot.docs[0].data();
+        const lastNumber = lastInvoice.invoiceNumber;
+        
+        // Extract and increment the number
+        const match = lastNumber.match(/INV-\d+-(\d+)/);
+        if (match) {
+            const nextNum = parseInt(match[1]) + 1;
+            return `INV-${currentYear.toString().slice(-2)}-${nextNum.toString().padStart(4, '0')}`;
+        }
+        
+        return generateInvoiceNumber();
+    } catch (error) {
+        console.error('Error getting next invoice number:', error);
+        return generateInvoiceNumber();
+    }
+}
 
 // Initialize invoice form functionality
 function initInvoiceForm() {
@@ -13,6 +64,19 @@ function initInvoiceForm() {
     
     // Initialize with one product row
     addProductRow();
+    
+    // Display next invoice number
+    displayNextInvoiceNumber();
+}
+
+// Display next available invoice number
+async function displayNextInvoiceNumber() {
+    const invoiceNumber = await getNextInvoiceNumber();
+    const invoiceHeader = document.querySelector('.invoice-header h2');
+    
+    if (invoiceHeader) {
+        invoiceHeader.innerHTML = `Create New Invoice <small class="invoice-number-preview">Next: ${invoiceNumber}</small>`;
+    }
 }
 
 // Add a new product row to the invoice form
@@ -107,7 +171,7 @@ function calculateTotals() {
 }
 
 // Save invoice to Firestore
-function saveInvoice(e) {
+async function saveInvoice(e) {
     e.preventDefault();
     
     const user = auth.currentUser;
@@ -115,6 +179,9 @@ function saveInvoice(e) {
         showMessage('Please log in to save invoices', 'error');
         return;
     }
+    
+    // Generate invoice number
+    const invoiceNumber = await getNextInvoiceNumber();
     
     // Get customer details
     const customerName = document.getElementById('customer-name').value;
@@ -145,8 +212,9 @@ function saveInvoice(e) {
     const gstAmount = parseFloat(document.getElementById('gst-amount').textContent.replace('₹', ''));
     const grandTotal = parseFloat(document.getElementById('grand-total').textContent.replace('₹', ''));
     
-    // Create invoice object
+    // Create invoice object with invoice number
     const invoice = {
+        invoiceNumber: invoiceNumber,
         customerName: customerName,
         customerMobile: customerMobile,
         products: products,
@@ -154,13 +222,14 @@ function saveInvoice(e) {
         gstAmount: gstAmount,
         grandTotal: grandTotal,
         createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-        createdBy: user.uid
+        createdBy: user.uid,
+        status: 'active'
     };
     
     // Save to Firestore
     db.collection('invoices').add(invoice)
         .then((docRef) => {
-            showMessage('Invoice saved successfully!', 'success');
+            showMessage(`Invoice ${invoiceNumber} saved successfully!`, 'success');
             resetInvoiceForm();
             // Redirect to dashboard after a short delay
             setTimeout(() => {
@@ -310,22 +379,23 @@ function printInvoice(invoiceId) {
 }
 
 // Generate invoice preview HTML
-function generateInvoicePreview(invoice, invoiceId) {
+function generateInvoicePreview(invoice, invoiceId, isPreview = false) {
     const previewContent = document.getElementById('invoice-preview-content');
     
-    // Format date - Handle both Firestore Timestamp and regular Date objects
+    // Format date
     let invoiceDate;
     if (invoice.createdAt) {
         if (typeof invoice.createdAt.toDate === 'function') {
-            // It's a Firestore Timestamp
             invoiceDate = invoice.createdAt.toDate().toLocaleDateString();
         } else {
-            // It's a regular Date object or string
             invoiceDate = new Date(invoice.createdAt).toLocaleDateString();
         }
     } else {
         invoiceDate = new Date().toLocaleDateString();
     }
+    
+    // Use invoice number if available, otherwise use ID
+    const displayInvoiceNumber = invoice.invoiceNumber || invoiceId;
     
     // Generate products table rows
     let productsRows = '';
@@ -346,15 +416,24 @@ function generateInvoicePreview(invoice, invoiceId) {
         <div class="invoice-preview-content">
             <div class="invoice-header-preview">
                 <div class="company-info">
-                    <h2>SHIVAM INDANE GAS</h2>
+                    <div class="company-logo">
+                        <h2>SHIVAM INDANE GAS</h2>
+                        <div class="invoice-badge">INVOICE</div>
+                    </div>
                     <p>Professional Gas Services</p>
                     <p>123 Business Street, City, State 12345</p>
                     <p>Phone: +91 98765 43210 | Email: info@shivamindanegas.com</p>
                 </div>
                 <div class="invoice-meta">
-                    <h3>INVOICE</h3>
-                    <p><strong>Invoice #:</strong> ${invoiceId}</p>
-                    <p><strong>Date:</strong> ${invoiceDate}</p>
+                    <div class="invoice-number-display">
+                        <span class="invoice-number-label">INVOICE #</span>
+                        <span class="invoice-number-value">${displayInvoiceNumber}</span>
+                    </div>
+                    <div class="invoice-date-display">
+                        <span class="invoice-date-label">DATE</span>
+                        <span class="invoice-date-value">${invoiceDate}</span>
+                    </div>
+                    ${invoice.status ? `<div class="invoice-status status-${invoice.status}">${invoice.status.toUpperCase()}</div>` : ''}
                 </div>
             </div>
             
@@ -398,8 +477,15 @@ function generateInvoicePreview(invoice, invoiceId) {
             </div>
             
             <div class="invoice-footer">
-                <p>Thank you for your business!</p>
-                <p>Terms: Payment due within 30 days</p>
+                <div class="payment-info">
+                    <h4>Payment Information</h4>
+                    <p>Bank: State Bank of India</p>
+                    <p>Account: 12345678901 | IFSC: SBIN0000123</p>
+                </div>
+                <div class="thank-you-message">
+                    <p>Thank you for your business!</p>
+                    <p class="terms">Terms: Payment due within 30 days</p>
+                </div>
             </div>
         </div>
     `;
