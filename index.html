@@ -532,6 +532,7 @@
                 <div class="modal-header">
                     <h5 class="modal-title">Invoice Preview</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    <button type="button" id="close-preview-btn" class="btn-close" style="display: none;"></button>
                 </div>
                 <div class="modal-body">
                     <div id="invoice-preview-content"></div>
@@ -545,6 +546,93 @@
             </div>
         </div>
     </div>
+
+    <!-- Add Edit Invoice Modal -->
+<div id="edit-invoice-modal" class="modal fade" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit Invoice</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <button type="button" id="close-edit-modal" class="btn-close" style="display: none;"></button>
+            </div>
+            <div class="modal-body">
+                <form id="edit-invoice-form">
+                    <!-- Customer Details -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h5 class="card-title mb-3">
+                                <i class="fas fa-user me-2 text-primary"></i>Customer Details
+                            </h5>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="edit-customer-name" class="form-label">Customer Name *</label>
+                            <input type="text" class="form-control" id="edit-customer-name" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="edit-customer-mobile" class="form-label">Mobile Number *</label>
+                            <input type="tel" class="form-control" id="edit-customer-mobile" required>
+                        </div>
+                    </div>
+
+                    <!-- Products Section -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h5 class="card-title mb-0">
+                                    <i class="fas fa-box me-2 text-primary"></i>Products & Services
+                                </h5>
+                                <button type="button" id="edit-add-product-btn" class="btn btn-outline-primary btn-sm">
+                                    <i class="fas fa-plus me-1"></i>Add Product
+                                </button>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div id="edit-products-container">
+                                <!-- Product rows will be added here dynamically -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Invoice Summary -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <h6 class="card-title mb-3">Invoice Summary</h6>
+                                    <div class="row">
+                                        <div class="col-md-4 mb-2">
+                                            <div class="d-flex justify-content-between">
+                                                <span>Subtotal:</span>
+                                                <span class="fw-bold" id="edit-subtotal-amount">₹0.00</span>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4 mb-2">
+                                            <div class="d-flex justify-content-between">
+                                                <span>GST Total:</span>
+                                                <span class="fw-bold" id="edit-gst-amount">₹0.00</span>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4 mb-2">
+                                            <div class="d-flex justify-content-between">
+                                                <span class="fw-bold">Grand Total:</span>
+                                                <span class="fw-bold text-success" id="edit-grand-total">₹0.00</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" id="cancel-edit-btn" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" id="update-invoice-btn" class="btn btn-primary">Update Invoice</button>
+            </div>
+        </div>
+    </div>
+</div>
 
     <!-- Bootstrap & Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
