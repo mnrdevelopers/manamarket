@@ -45,7 +45,7 @@ function setActiveNavButton(pageId) {
             activeButtonId = 'invoices-list-nav-3';
             break;
         case 'stock-page':
-            activeButtonId = 'stock-management-nav-4';
+            activeButtonId = 'stock-management-nav-4'; // Updated this line
             break;
     }
     
@@ -98,8 +98,9 @@ function setupNavigation() {
     const dashboardNav1 = document.getElementById('dashboard-nav');
     const dashboardNav2 = document.getElementById('dashboard-nav-2');
     const dashboardNav3 = document.getElementById('dashboard-nav-3');
+    const dashboardNav4 = document.getElementById('dashboard-nav-4');
     
-    [dashboardNav1, dashboardNav2, dashboardNav3].forEach((nav, index) => {
+    [dashboardNav1, dashboardNav2, dashboardNav3, dashboardNav4].forEach((nav, index) => {
         if (nav) {
             nav.addEventListener('click', function(e) {
                 e.preventDefault();
@@ -114,8 +115,9 @@ function setupNavigation() {
     const createInvoiceNav1 = document.getElementById('create-invoice-nav');
     const createInvoiceNav2 = document.getElementById('create-invoice-nav-2');
     const createInvoiceNav3 = document.getElementById('create-invoice-nav-3');
+    const createInvoiceNav4 = document.getElementById('create-invoice-nav-4');
     
-    [createInvoiceNav1, createInvoiceNav2, createInvoiceNav3].forEach((nav, index) => {
+    [createInvoiceNav1, createInvoiceNav2, createInvoiceNav3, createInvoiceNav4].forEach((nav, index) => {
         if (nav) {
             nav.addEventListener('click', function(e) {
                 e.preventDefault();
@@ -129,8 +131,9 @@ function setupNavigation() {
     const invoicesNav1 = document.getElementById('invoices-list-nav');
     const invoicesNav2 = document.getElementById('invoices-list-nav-2');
     const invoicesNav3 = document.getElementById('invoices-list-nav-3');
+    const invoicesNav4 = document.getElementById('invoices-list-nav-4');
     
-    [invoicesNav1, invoicesNav2, invoicesNav3].forEach((nav, index) => {
+    [invoicesNav1, invoicesNav2, invoicesNav3, invoicesNav4].forEach((nav, index) => {
         if (nav) {
             nav.addEventListener('click', function(e) {
                 e.preventDefault();
@@ -144,25 +147,30 @@ function setupNavigation() {
         }
     });
 
-    // Add this with other navigation setups in setupNavigation() function
-const stockNav1 = document.getElementById('stock-management-nav');
-const stockNav2 = document.getElementById('stock-management-nav-2'); // You'll need to add this to other pages
-
-if (stockNav1) {
-    stockNav1.addEventListener('click', function(e) {
-        e.preventDefault();
-        console.log('Stock management nav clicked');
-        showPage('stock-page');
-        if (typeof loadAllProducts === 'function') {
-            setTimeout(loadAllProducts, 100);
+    // Stock management navigation - COMPLETE VERSION
+    const stockNav1 = document.getElementById('stock-management-nav');
+    const stockNav2 = document.getElementById('stock-management-nav-2');
+    const stockNav3 = document.getElementById('stock-management-nav-3');
+    const stockNav4 = document.getElementById('stock-management-nav-4');
+    
+    [stockNav1, stockNav2, stockNav3, stockNav4].forEach((nav, index) => {
+        if (nav) {
+            nav.addEventListener('click', function(e) {
+                e.preventDefault();
+                console.log('Stock management nav clicked', index + 1);
+                showPage('stock-page');
+                if (typeof loadAllProducts === 'function') {
+                    setTimeout(loadAllProducts, 100);
+                }
+            });
         }
     });
-}
     
     // Quick action buttons in dashboard
     const quickCreateInvoice = document.getElementById('quick-create-invoice');
     const quickViewInvoices = document.getElementById('quick-view-invoices');
     const viewAllInvoices = document.getElementById('view-all-invoices');
+    const quickStockManagement = document.getElementById('quick-stock-management');
     
     if (quickCreateInvoice) {
         quickCreateInvoice.addEventListener('click', function(e) {
@@ -194,19 +202,17 @@ if (stockNav1) {
         });
     }
 
-    // Add this to the quick action buttons section in setupNavigation()
-const quickStockManagement = document.getElementById('quick-stock-management');
-
-if (quickStockManagement) {
-    quickStockManagement.addEventListener('click', function(e) {
-        e.preventDefault();
-        console.log('Quick stock management clicked');
-        showPage('stock-page');
-        if (typeof loadAllProducts === 'function') {
-            setTimeout(loadAllProducts, 100);
-        }
-    });
-}
+    // Quick stock management button
+    if (quickStockManagement) {
+        quickStockManagement.addEventListener('click', function(e) {
+            e.preventDefault();
+            console.log('Quick stock management clicked');
+            showPage('stock-page');
+            if (typeof loadAllProducts === 'function') {
+                setTimeout(loadAllProducts, 100);
+            }
+        });
+    }
     
     // Back to invoices button in create invoice page
     const backToInvoices = document.getElementById('back-to-invoices');
