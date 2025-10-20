@@ -111,21 +111,25 @@ function setupNavigation() {
         }
     });
     
-    // Create invoice navigation
-    const createInvoiceNav1 = document.getElementById('create-invoice-nav');
-    const createInvoiceNav2 = document.getElementById('create-invoice-nav-2');
-    const createInvoiceNav3 = document.getElementById('create-invoice-nav-3');
-    const createInvoiceNav4 = document.getElementById('create-invoice-nav-4');
-    
-    [createInvoiceNav1, createInvoiceNav2, createInvoiceNav3, createInvoiceNav4].forEach((nav, index) => {
-        if (nav) {
-            nav.addEventListener('click', function(e) {
-                e.preventDefault();
-                console.log('Create invoice nav clicked', index + 1);
-                showPage('invoice-page');
-            });
-        }
-    });
+  // Create invoice navigation
+const createInvoiceNav1 = document.getElementById('create-invoice-nav');
+const createInvoiceNav2 = document.getElementById('create-invoice-nav-2');
+const createInvoiceNav3 = document.getElementById('create-invoice-nav-3');
+const createInvoiceNav4 = document.getElementById('create-invoice-nav-4');
+
+[createInvoiceNav1, createInvoiceNav2, createInvoiceNav3, createInvoiceNav4].forEach((nav, index) => {
+    if (nav) {
+        nav.addEventListener('click', function(e) {
+            e.preventDefault();
+            console.log('Create invoice nav clicked', index + 1);
+            showPage('invoice-page');
+            // Refresh available products when switching to invoice page
+            if (typeof loadAvailableProducts === 'function') {
+                setTimeout(loadAvailableProducts, 100);
+            }
+        });
+    }
+});
     
     // Invoices list navigation
     const invoicesNav1 = document.getElementById('invoices-list-nav');
