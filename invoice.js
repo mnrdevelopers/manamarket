@@ -342,8 +342,8 @@ async function saveInvoice(e) {
             if (typeof showPage === 'function') {
                 showPage('dashboard-page');
             }
-            if (typeof loadDashboardData === 'function') {
-                loadDashboardData();
+           if (typeof loadDashboardData === 'function') {
+                    setTimeout(loadDashboardData, 100);
             }
         }, 2000);
     } catch (error) {
@@ -379,7 +379,7 @@ function resetInvoiceForm() {
 }
 
 // Load recent invoices for dashboard
-function loadRecentInvoices() {
+function loadDashboardRecentInvoices() {
     // Use safe auth access
     let user;
     try {
