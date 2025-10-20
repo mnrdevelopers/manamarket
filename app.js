@@ -402,3 +402,24 @@ function initActivePage() {
             break;
     }
 }
+
+// Temporary debug function - call this in browser console to test
+window.debugShowDashboard = function() {
+    const dashboardPage = document.getElementById('dashboard-page');
+    if (dashboardPage) {
+        dashboardPage.style.display = 'block';
+        dashboardPage.classList.add('active');
+        console.log('Dashboard should be visible now');
+    } else {
+        console.error('Dashboard page not found in DOM');
+    }
+};
+
+// Check if dashboard elements exist on load
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM loaded - checking dashboard elements:');
+    console.log('Dashboard page:', document.getElementById('dashboard-page'));
+    console.log('Main content:', document.querySelector('.main-content'));
+    console.log('Dashboard stats:', document.querySelector('.dashboard-stats'));
+    console.log('Recent invoices:', document.getElementById('invoices-list'));
+});
