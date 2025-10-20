@@ -506,3 +506,151 @@
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
 }
+
+/* Modal Styles */
+.modal {
+    background: rgba(0, 0, 0, 0.5);
+}
+
+.modal-content {
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 10px 50px rgba(0, 0, 0, 0.3);
+}
+
+.modal-header {
+    border-bottom: 1px solid #e9ecef;
+    padding: 1.5rem;
+}
+
+.modal-footer {
+    border-top: 1px solid #e9ecef;
+    padding: 1rem 1.5rem;
+}
+
+/* Invoice Actions */
+.invoice-actions-cell {
+    white-space: nowrap;
+}
+
+.btn-view, .btn-edit, .btn-delete {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+    border: none;
+    border-radius: 4px;
+    margin: 0 2px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-view {
+    background: #17a2b8;
+    color: white;
+}
+
+.btn-edit {
+    background: #ffc107;
+    color: #212529;
+}
+
+.btn-delete {
+    background: #dc3545;
+    color: white;
+}
+
+.btn-view:hover, .btn-edit:hover, .btn-delete:hover {
+    transform: translateY(-1px);
+    opacity: 0.9;
+}
+
+/* Invoice Number */
+.invoice-number-simple {
+    font-family: 'Roboto Mono', monospace;
+    font-weight: 500;
+}
+
+.invoice-number {
+    background: #f8f9fa;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.875rem;
+}
+
+/* Loading and Empty States */
+.loading-invoices, .no-invoices-found {
+    text-align: center;
+    padding: 3rem !important;
+    color: #6c757d;
+}
+
+.no-invoices {
+    text-align: center;
+    padding: 2rem;
+    color: #6c757d;
+}
+
+/* Amount Cells */
+.amount-cell {
+    font-family: 'Roboto Mono', monospace;
+    font-weight: 500;
+    color: #28a745;
+}
+
+/* Utility Classes */
+.hidden {
+    display: none !important;
+}
+
+/* Print styles for invoice preview */
+@media print {
+    body * {
+        visibility: hidden;
+    }
+    
+    .modal,
+    .modal * {
+        visibility: visible;
+    }
+    
+    .modal {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background: white;
+    }
+    
+    .modal-dialog {
+        max-width: none;
+        margin: 0;
+    }
+    
+    .modal-content {
+        border: none;
+        box-shadow: none;
+    }
+    
+    .modal-header,
+    .modal-footer {
+        display: none !important;
+    }
+}
+
+/* Responsive table */
+@media (max-width: 768px) {
+    .table-responsive {
+        font-size: 0.875rem;
+    }
+    
+    .invoice-actions-cell {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+    
+    .btn-view, .btn-edit, .btn-delete {
+        width: 100%;
+        margin: 0;
+    }
+}
