@@ -78,7 +78,7 @@ function setupStockEventListeners() {
 // Load all products for the current user
 function loadAllProducts() {
     // Wait for auth to be ready
-    if (!auth || !auth.currentUser) {
+    if (!auth || !getAuth().currentUser) {
         console.log('Auth not ready, waiting...');
         setTimeout(loadAllProducts, 100);
         return;
