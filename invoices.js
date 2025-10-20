@@ -304,14 +304,8 @@ function editInvoice(invoiceId) {
 
 // Load invoice data into edit form
 function loadInvoiceIntoEditForm(invoice, invoiceId) {
-    const editForm = document.getElementById('edit-invoice-form');
-    if (!editForm) {
-        console.error('Edit form not found');
-        return;
-    }
-    
     // Store the invoice ID for updating
-    editForm.dataset.invoiceId = invoiceId;
+    document.getElementById('edit-invoice-form').dataset.invoiceId = invoiceId;
     
     // Set customer details
     document.getElementById('edit-customer-name').value = invoice.customerName || '';
@@ -497,33 +491,20 @@ function closeEditModal() {
 
 // Setup edit modal event listeners
 function setupEditModalListeners() {
-    // Add product button - check if exists
-    const addProductBtn = document.getElementById('edit-add-product-btn');
-    if (addProductBtn) {
-        addProductBtn.addEventListener('click', function() {
-            addEditProductRow();
-        });
-    }
+    // Add product button
+    document.getElementById('edit-add-product-btn').addEventListener('click', function() {
+        addEditProductRow();
+    });
     
-    // Update invoice button - check if exists
-    const updateBtn = document.getElementById('update-invoice-btn');
-    if (updateBtn) {
-        updateBtn.addEventListener('click', function(e) {
-            e.preventDefault();
-            updateInvoice();
-        });
-    }
+    // Update invoice button
+    document.getElementById('update-invoice-btn').addEventListener('click', function(e) {
+        e.preventDefault();
+        updateInvoice();
+    });
     
-    // Close and cancel buttons - check if exist
-    const closeEditModal = document.getElementById('close-edit-modal');
-    if (closeEditModal) {
-        closeEditModal.addEventListener('click', closeEditModal);
-    }
-    
-    const cancelEditBtn = document.getElementById('cancel-edit-btn');
-    if (cancelEditBtn) {
-        cancelEditBtn.addEventListener('click', closeEditModal);
-    }
+    // Close and cancel buttons
+    document.getElementById('close-edit-modal').addEventListener('click', closeEditModal);
+    document.getElementById('cancel-edit-btn').addEventListener('click', closeEditModal);
 }
 
 // View invoice details
