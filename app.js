@@ -11,15 +11,49 @@ function showPage(pageId) {
         page.classList.remove('active');
     });
     
+    // Remove active class from all nav buttons
+    document.querySelectorAll('.nav-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    
     // Show the requested page
     const targetPage = document.getElementById(pageId);
     if (targetPage) {
         targetPage.style.display = 'block';
         targetPage.classList.add('active');
         console.log('Successfully showed page:', pageId);
+        
+        // Set active state for the corresponding nav button
+        setActiveNavButton(pageId);
     } else {
         console.error('Page not found:', pageId);
     }
+}
+
+// Set active state for navigation button
+function setActiveNavButton(pageId) {
+    let activeButtonId = '';
+    
+    switch(pageId) {
+        case 'dashboard-page':
+            activeButtonId = 'dashboard-nav';
+            break;
+        case 'invoice-page':
+            activeButtonId = 'create-invoice-nav-2';
+            break;
+        case 'invoices-page':
+            activeButtonId = 'invoices-list-nav-3';
+            break;
+        case 'stock-page':
+            activeButtonId = 'stock-management-nav-4';
+            break;
+    }
+    
+    // Also set active state for buttons with the same function on other pages
+    const activeButtons = document.querySelectorAll(`[id^="${activeButtonId.split('-')[0]}"]`);
+    activeButtons.forEach(btn => {
+        btn.classList.add('active');
+    });
 }
 
 // Hide all pages initially and show loading
