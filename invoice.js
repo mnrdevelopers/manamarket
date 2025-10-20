@@ -487,15 +487,10 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('invoice-preview-modal').classList.add('hidden');
     });
     
-   // Print invoice from preview - Updated
+ // Print invoice from preview - Fixed
 document.getElementById('print-invoice-btn').addEventListener('click', function() {
-    // Use the new reliable print function
-    if (currentInvoiceToPrint) {
-        printInvoice(currentInvoiceToPrint);
-    } else {
-        // Fallback to window.print() if no specific invoice
-        window.print();
-    }
+    // Simply use window.print() for the current preview
+    window.print();
 });
 
 // Reliable print function that opens new window
