@@ -380,16 +380,48 @@ function resetInvoiceForm() {
 
 // Load recent invoices for dashboard
 function loadRecentInvoices() {
-    const user = auth.currentUser;
-    if (!user) return;
+    // Use safe auth access
+    let user;
+    try {
+        user = getAuth().currentUser;
+    } catch (error) {
+        console.log('Auth not ready yet');
+        return;
+    }
+    
+    if (!user) {
+        console.log('No user logged in for recent invoices');
+        const invoicesList = document.getElementById('invoices-list');
+        if (invoicesList) {
+            invoicesList.innerHTML = '<p>Please log in to view invoices</p>';
+        }
+        return;
+    }
 
     const invoicesList = document.getElementById('invoices-list');
-    if (!invoicesList) return;
+    if (!invoicesList) {
+        console.log('Invoices list element not found');
+        return;
+    }
 
     invoicesList.innerHTML = '<p>Loading invoices...</p>';
 
-    db.collection('invoices')
+    console.log('Loading recent invoices for user:', user.uid);
+
+    // Use safe db access
+    let dbInstance;
+    try {
+        dbInstance = getDb();
+    } catch (error) {
+        console.error('Database not available:', error);
+        invoicesList.innerHTML = '<p class="error">Database connection error</p>';
+        return;
+    }
+
+    dbInstance.collection('invoices')
         .where('createdBy', '==', user.uid)
+        .orderBy('createdAt', 'desc')
+        .limit(10)
         .get()
         .then((querySnapshot) => {
             invoicesList.innerHTML = '';
@@ -399,7 +431,6 @@ function loadRecentInvoices() {
                 return;
             }
 
-            // Convert to array and sort by date locally
             const invoices = [];
             querySnapshot.forEach((doc) => {
                 invoices.push({
@@ -408,17 +439,9 @@ function loadRecentInvoices() {
                 });
             });
 
-            // Sort by date (newest first)
-            invoices.sort((a, b) => {
-                const dateA = a.createdAt ? a.createdAt.toDate() : new Date(0);
-                const dateB = b.createdAt ? b.createdAt.toDate() : new Date(0);
-                return dateB - dateA;
-            });
+            console.log(`Loaded ${invoices.length} recent invoices`);
 
-            // Show only last 10 invoices
-            const recentInvoices = invoices.slice(0, 10);
-
-            recentInvoices.forEach((invoice) => {
+            invoices.forEach((invoice) => {
                 const invoiceDate = invoice.createdAt ? 
                     invoice.createdAt.toDate().toLocaleDateString() : 'Date not available';
                 
@@ -446,8 +469,13 @@ function loadRecentInvoices() {
             });
         })
         .catch((error) => {
+            console.error('Error loading recent invoices:', error);
             invoicesList.innerHTML = '<p class="error">Error loading invoices</p>';
-            console.error('Error loading invoices:', error);
+            
+            // Don't show error message for permission issues when collection doesn't exist yet
+            if (error.code !== 'failed-precondition' && error.code !== 'permission-denied') {
+                showMessage('Error loading invoices: ' + error.message, 'error');
+            }
         });
 }
 
