@@ -43,6 +43,9 @@ function setupInvoicesEventListeners() {
     if (nextPageBtn) {
         nextPageBtn.addEventListener('click', goToNextPage);
     }
+
+    // Add this line:
+    setupEditModalListeners();
     
     // Delete confirmation modal
     const closeDeleteModal = document.getElementById('close-delete-modal');
@@ -273,12 +276,229 @@ function confirmDeleteInvoice() {
         });
 }
 
-// Edit invoice - redirect to create invoice page with data
+// Edit invoice - load data into edit form
 function editInvoice(invoiceId) {
-    // For now, we'll just show a message since editing is more complex
-    // In a real implementation, you would load the invoice data into the form
-    showMessage('Edit functionality will be implemented in the next version', 'info');
-    console.log('Edit invoice:', invoiceId);
+    console.log('Editing invoice:', invoiceId);
+    
+    db.collection('invoices').doc(invoiceId).get()
+        .then((doc) => {
+            if (doc.exists) {
+                const invoice = doc.data();
+                loadInvoiceIntoEditForm(invoice, doc.id);
+                document.getElementById('edit-invoice-modal').classList.remove('hidden');
+            } else {
+                showMessage('Invoice not found', 'error');
+            }
+        })
+        .catch((error) => {
+            showMessage('Error loading invoice: ' + error.message, 'error');
+            console.error('Error loading invoice:', error);
+        });
+}
+
+// Load invoice data into edit form
+function loadInvoiceIntoEditForm(invoice, invoiceId) {
+    // Store the invoice ID for updating
+    document.getElementById('edit-invoice-form').dataset.invoiceId = invoiceId;
+    
+    // Set customer details
+    document.getElementById('edit-customer-name').value = invoice.customerName || '';
+    document.getElementById('edit-customer-mobile').value = invoice.customerMobile || '';
+    
+    // Clear existing products
+    const productsContainer = document.getElementById('edit-products-container');
+    productsContainer.innerHTML = '';
+    
+    // Add products
+    if (invoice.products && invoice.products.length > 0) {
+        invoice.products.forEach((product, index) => {
+            addEditProductRow(product);
+        });
+    } else {
+        addEditProductRow();
+    }
+    
+    // Update totals
+    updateEditTotals(invoice.subtotal, invoice.gstAmount, invoice.grandTotal);
+}
+
+// Add product row to edit form
+function addEditProductRow(product = null) {
+    const productsContainer = document.getElementById('edit-products-container');
+    const productRow = document.createElement('div');
+    productRow.className = 'product-row';
+    
+    productRow.innerHTML = `
+        <div class="form-group">
+            <label>Product Name</label>
+            <input type="text" class="edit-product-name" value="${product ? product.name : ''}" required>
+        </div>
+        <div class="form-group">
+            <label>Quantity</label>
+            <input type="number" class="edit-product-quantity" min="1" value="${product ? product.quantity : 1}" required>
+        </div>
+        <div class="form-group">
+            <label>Price (₹)</label>
+            <input type="number" class="edit-product-price" min="0" step="0.01" value="${product ? product.price : ''}" required>
+        </div>
+        <div class="form-group">
+            <label>GST (%)</label>
+            <input type="number" class="edit-product-gst" min="0" max="100" value="${product ? product.gst : 18}" required>
+        </div>
+        <div class="form-group">
+            <label>Total (₹)</label>
+            <input type="text" class="edit-product-total" readonly value="${product ? '₹' + product.total.toFixed(2) : ''}">
+        </div>
+        <button type="button" class="btn-remove-edit-product">Remove</button>
+    `;
+    
+    productsContainer.appendChild(productRow);
+    
+    // Add event listeners
+    const removeBtn = productRow.querySelector('.btn-remove-edit-product');
+    removeBtn.addEventListener('click', function() {
+        if (document.querySelectorAll('.product-row').length > 1) {
+            productRow.remove();
+            calculateEditTotals();
+        } else {
+            alert('Invoice must have at least one product.');
+        }
+    });
+    
+    // Add input event listeners for auto-calculation
+    const inputs = productRow.querySelectorAll('.edit-product-quantity, .edit-product-price, .edit-product-gst');
+    inputs.forEach(input => {
+        input.addEventListener('input', calculateEditTotals);
+    });
+}
+
+// Calculate totals for edit form
+function calculateEditTotals() {
+    const productRows = document.querySelectorAll('#edit-products-container .product-row');
+    let subtotal = 0;
+    let gstTotal = 0;
+    let grandTotal = 0;
+    
+    productRows.forEach(row => {
+        const quantity = parseFloat(row.querySelector('.edit-product-quantity').value) || 0;
+        const price = parseFloat(row.querySelector('.edit-product-price').value) || 0;
+        const gstPercent = parseFloat(row.querySelector('.edit-product-gst').value) || 0;
+        
+        const productSubtotal = quantity * price;
+        const productGst = productSubtotal * (gstPercent / 100);
+        const productTotal = productSubtotal + productGst;
+        
+        // Update product total display
+        row.querySelector('.edit-product-total').value = `₹${productTotal.toFixed(2)}`;
+        
+        subtotal += productSubtotal;
+        gstTotal += productGst;
+        grandTotal += productTotal;
+    });
+    
+    updateEditTotals(subtotal, gstTotal, grandTotal);
+}
+
+// Update edit form totals display
+function updateEditTotals(subtotal, gstTotal, grandTotal) {
+    document.getElementById('edit-subtotal-amount').textContent = `₹${subtotal.toFixed(2)}`;
+    document.getElementById('edit-gst-amount').textContent = `₹${gstTotal.toFixed(2)}`;
+    document.getElementById('edit-grand-total').textContent = `₹${grandTotal.toFixed(2)}`;
+}
+
+// Update invoice in Firestore
+function updateInvoice() {
+    const invoiceId = document.getElementById('edit-invoice-form').dataset.invoiceId;
+    if (!invoiceId) {
+        showMessage('Invoice ID not found', 'error');
+        return;
+    }
+    
+    const user = auth.currentUser;
+    if (!user) {
+        showMessage('Please log in to update invoices', 'error');
+        return;
+    }
+    
+    // Get updated customer details
+    const customerName = document.getElementById('edit-customer-name').value;
+    const customerMobile = document.getElementById('edit-customer-mobile').value;
+    
+    // Get updated products
+    const products = [];
+    const productRows = document.querySelectorAll('#edit-products-container .product-row');
+    
+    productRows.forEach(row => {
+        const productName = row.querySelector('.edit-product-name').value;
+        const quantity = parseFloat(row.querySelector('.edit-product-quantity').value);
+        const price = parseFloat(row.querySelector('.edit-product-price').value);
+        const gst = parseFloat(row.querySelector('.edit-product-gst').value);
+        const totalElement = row.querySelector('.edit-product-total').value;
+        const total = totalElement ? parseFloat(totalElement.replace('₹', '')) : 0;
+        
+        if (productName.trim()) {
+            products.push({
+                name: productName,
+                quantity: quantity,
+                price: price,
+                gst: gst,
+                total: total
+            });
+        }
+    });
+    
+    // Calculate updated totals
+    const subtotal = parseFloat(document.getElementById('edit-subtotal-amount').textContent.replace('₹', ''));
+    const gstAmount = parseFloat(document.getElementById('edit-gst-amount').textContent.replace('₹', ''));
+    const grandTotal = parseFloat(document.getElementById('edit-grand-total').textContent.replace('₹', ''));
+    
+    // Create updated invoice object
+    const updatedInvoice = {
+        customerName: customerName,
+        customerMobile: customerMobile,
+        products: products,
+        subtotal: subtotal,
+        gstAmount: gstAmount,
+        grandTotal: grandTotal,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    };
+    
+    // Update in Firestore
+    db.collection('invoices').doc(invoiceId).update(updatedInvoice)
+        .then(() => {
+            showMessage('Invoice updated successfully!', 'success');
+            closeEditModal();
+            loadAllInvoices(); // Reload the list
+        })
+        .catch((error) => {
+            showMessage('Error updating invoice: ' + error.message, 'error');
+            console.error('Error updating invoice:', error);
+        });
+}
+
+// Close edit modal
+function closeEditModal() {
+    document.getElementById('edit-invoice-modal').classList.add('hidden');
+    document.getElementById('edit-invoice-form').reset();
+    document.getElementById('edit-products-container').innerHTML = '';
+}
+
+// Setup edit modal event listeners
+function setupEditModalListeners() {
+    // Add product button
+    document.getElementById('edit-add-product-btn').addEventListener('click', function() {
+        addEditProductRow();
+    });
+    
+    // Update invoice button
+    document.getElementById('update-invoice-btn').addEventListener('click', function(e) {
+        e.preventDefault();
+        updateInvoice();
+    });
+    
+    // Close and cancel buttons
+    document.getElementById('close-edit-modal').addEventListener('click', closeEditModal);
+    document.getElementById('cancel-edit-btn').addEventListener('click', closeEditModal);
 }
 
 // View invoice details
