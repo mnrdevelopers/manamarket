@@ -1459,3 +1459,25 @@ body {
     z-index: 9999;
     color: white;
 }
+
+/* EMERGENCY FIX FOR DASHBOARD VISIBILITY */
+#dashboard-page {
+    min-height: 100vh;
+    display: block !important;
+}
+
+#dashboard-page .main-content {
+    display: block !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+/* Ensure dashboard page is visible when active */
+.page.active {
+    display: block !important;
+}
+
+/* Override any hiding of main content */
+.main-content {
+    display: block !important;
+}
