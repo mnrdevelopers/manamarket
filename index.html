@@ -505,26 +505,28 @@
         </main>
     </div>
 
-    <!-- Modals (unchanged from your original) -->
-    <div id="delete-confirm-modal" class="modal fade" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Confirm Delete</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <p>Are you sure you want to delete this invoice? This action cannot be undone.</p>
-                    <p><strong>Invoice #:</strong> <span id="delete-invoice-id"></span></p>
-                    <p><strong>Customer:</strong> <span id="delete-customer-name"></span></p>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button id="confirm-delete-btn" class="btn btn-danger">Delete Invoice</button>
-                </div>
+   <!-- Update your delete modal -->
+<div id="delete-confirm-modal" class="modal fade" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirm Delete</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <!-- Add close button for JavaScript -->
+                <button type="button" id="close-delete-modal" class="btn-close" style="display: none;"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete this invoice? This action cannot be undone.</p>
+                <p><strong>Invoice #:</strong> <span id="delete-invoice-id"></span></p>
+                <p><strong>Customer:</strong> <span id="delete-customer-name"></span></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" id="cancel-delete-btn">Cancel</button>
+                <button id="confirm-delete-btn" class="btn btn-danger">Delete Invoice</button>
             </div>
         </div>
     </div>
+</div>
 
     <div id="invoice-preview-modal" class="modal fade" tabindex="-1">
         <div class="modal-dialog modal-xl">
