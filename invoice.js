@@ -491,16 +491,18 @@ function generateInvoicePreview(invoice, invoiceId, isPreview = false) {
 document.addEventListener('DOMContentLoaded', () => {
     initInvoiceForm();
     
-    // Setup invoice preview modal
-    document.getElementById('preview-invoice-btn').addEventListener('click', function() {
-        // Validate form before preview
-        const customerName = document.getElementById('customer-name').value;
-        const customerMobile = document.getElementById('customer-mobile').value;
-        
-        if (!customerName || !customerMobile) {
-            showMessage('Please fill in customer details before previewing', 'error');
-            return;
-        }
+    // Setup invoice preview modal - check if element exists first
+    const previewBtn = document.getElementById('preview-invoice-btn');
+    if (previewBtn) {
+        previewBtn.addEventListener('click', function() {
+            // Your existing preview code here
+            const customerName = document.getElementById('customer-name').value;
+            const customerMobile = document.getElementById('customer-mobile').value;
+            
+            if (!customerName || !customerMobile) {
+                showMessage('Please fill in customer details before previewing', 'error');
+                return;
+            }
         
         // Validate at least one product has data
         const productRows = document.querySelectorAll('.product-row');
@@ -553,17 +555,11 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('invoice-preview-modal').classList.remove('hidden');
     });
     
-    // Close preview modal
-    document.getElementById('close-preview').addEventListener('click', function() {
-        document.getElementById('invoice-preview-modal').classList.add('hidden');
-    });
-    
-    document.getElementById('close-preview-btn').addEventListener('click', function() {
-        document.getElementById('invoice-preview-modal').classList.add('hidden');
-    });
-    
-    // Print invoice from preview
-    document.getElementById('print-invoice-btn').addEventListener('click', function() {
-        window.print();
-    });
+   // Print invoice from preview
+    const printBtn = document.getElementById('print-invoice-btn');
+    if (printBtn) {
+        printBtn.addEventListener('click', function() {
+            window.print();
+        });
+    }
 });
