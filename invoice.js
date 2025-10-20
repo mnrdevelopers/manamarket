@@ -184,7 +184,7 @@ async function saveInvoice(e) {
         showMessage('Please log in to save invoices', 'error');
         return;
     }
-    
+
     // Generate invoice number
     const invoiceNumber = await getNextInvoiceNumber();
     
@@ -231,20 +231,24 @@ async function saveInvoice(e) {
         status: 'active'
     };
     
-    // Save to Firestore
-    db.collection('invoices').add(invoice)
-        .then((docRef) => {
-            showMessage(`Invoice ${invoiceNumber} saved successfully!`, 'success');
-            resetInvoiceForm();
-            // Redirect to dashboard after a short delay
-            setTimeout(() => {
-                showPage('dashboard-page');
-                loadDashboardData();
-            }, 2000);
-        })
-        .catch((error) => {
-            showMessage('Error saving invoice: ' + error.message, 'error');
-        });
+    try {
+        // Save to Firestore
+        const docRef = await db.collection('invoices').add(invoice);
+        
+        // Update stock levels
+        await updateProductStock(products);
+        
+        showMessage(`Invoice ${invoiceNumber} saved successfully!`, 'success');
+        resetInvoiceForm();
+        
+        // Redirect to dashboard after a short delay
+        setTimeout(() => {
+            showPage('dashboard-page');
+            loadDashboardData();
+        }, 2000);
+    } catch (error) {
+        showMessage('Error saving invoice: ' + error.message, 'error');
+    }
 }
 
 // Reset invoice form
@@ -697,4 +701,42 @@ function loadAvailableProducts() {
             window.availableProducts = [];
         });
 }
+
+async function updateProductStock(products) {
+    const user = auth.currentUser;
+    if (!user) return;
+
+    const batch = db.batch();
+    
+    for (const product of products) {
+        // Find the product in available products
+        const availableProduct = window.availableProducts.find(p => 
+            p.name === product.name && p.price === product.price && p.gst === product.gst
+        );
+        
+        if (availableProduct) {
+            const newStock = availableProduct.stock - product.quantity;
+            const productRef = db.collection('products').doc(availableProduct.id);
+            
+            if (newStock >= 0) {
+                batch.update(productRef, {
+                    stock: newStock,
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+            } else {
+                console.warn(`Insufficient stock for ${product.name}`);
+                showMessage(`Warning: Insufficient stock for ${product.name}`, 'error');
+            }
+        }
+    }
+    
+    try {
+        await batch.commit();
+        console.log('Stock levels updated successfully');
+    } catch (error) {
+        console.error('Error updating stock levels:', error);
+    }
+}
+
+
 
