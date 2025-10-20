@@ -378,34 +378,38 @@ function printInvoice(invoiceId) {
         });
 }
 
-// Generate clean professional invoice preview
+// Generate compact invoice preview based on example
 function generateInvoicePreview(invoice, invoiceId, isPreview = false) {
     const previewContent = document.getElementById('invoice-preview-content');
     
-    // Format date
+    // Format dates
     let invoiceDate;
+    let dueDate = new Date();
+    dueDate.setDate(dueDate.getDate() + 30); // 30 days from now
+    
     if (invoice.createdAt) {
         if (typeof invoice.createdAt.toDate === 'function') {
-            invoiceDate = invoice.createdAt.toDate().toLocaleDateString();
+            invoiceDate = invoice.createdAt.toDate();
         } else {
-            invoiceDate = new Date(invoice.createdAt).toLocaleDateString();
+            invoiceDate = new Date(invoice.createdAt);
         }
     } else {
-        invoiceDate = new Date().toLocaleDateString();
+        invoiceDate = new Date();
     }
+    
+    const formattedInvoiceDate = invoiceDate.toLocaleDateString();
+    const formattedDueDate = dueDate.toLocaleDateString();
     
     // Use invoice number if available, otherwise use ID
     const displayInvoiceNumber = invoice.invoiceNumber || invoiceId;
+    const customerId = invoice.customerMobile || 'N/A';
     
-    // Generate products table rows
+    // Generate products rows
     let productsRows = '';
     invoice.products.forEach((product, index) => {
         productsRows += `
             <tr>
-                <td>${index + 1}</td>
                 <td>${product.name}</td>
-                <td>${product.quantity}</td>
-                <td>₹${product.price.toFixed(2)}</td>
                 <td>${product.gst}%</td>
                 <td>₹${product.total.toFixed(2)}</td>
             </tr>
@@ -413,49 +417,58 @@ function generateInvoicePreview(invoice, invoiceId, isPreview = false) {
     });
     
     previewContent.innerHTML = `
-        <div class="invoice-preview-content">
-            <!-- Simple Professional Header -->
-            <div class="invoice-header-preview">
-                <div class="company-info">
-                    <h2>SHIVAM INDANE GAS</h2>
-                    <p>Professional Gas Services</p>
-                </div>
-                <div class="invoice-meta">
-                    <div class="invoice-details-meta">
-                        <div class="invoice-meta-row">
-                            <strong>Invoice #:</strong> ${displayInvoiceNumber}
-                        </div>
-                        <div class="invoice-meta-row">
-                            <strong>Date:</strong> ${invoiceDate}
-                        </div>
-                        ${invoice.status ? `
-                        <div class="invoice-meta-row">
-                            <strong>Status:</strong> <span class="invoice-status">${invoice.status}</span>
-                        </div>
-                        ` : ''}
-                    </div>
+        <div class="invoice-preview-content compact-invoice">
+            <!-- Company Header -->
+            <div class="company-header">
+                <div class="company-name">SHIVAM INDANE GAS</div>
+                <div class="company-address">
+                    Professional Gas Services<br>
+                    City, State 12345<br>
+                    Phone: +91 98765 43210
                 </div>
             </div>
             
-            <!-- Customer Information -->
-            <div class="customer-section">
-                <div class="customer-info-preview">
-                    <h4>Bill To:</h4>
-                    <p><strong>${invoice.customerName}</strong></p>
-                    <p>Mobile: ${invoice.customerMobile}</p>
+            <div class="invoice-layout">
+                <!-- Left Column - Bill To -->
+                <div class="bill-to-section">
+                    <div class="section-title">BILL TO</div>
+                    <div class="customer-details">
+                        <strong>${invoice.customerName}</strong><br>
+                        Mobile: ${invoice.customerMobile}
+                    </div>
+                </div>
+                
+                <!-- Right Column - Invoice Details -->
+                <div class="invoice-details-section">
+                    <div class="section-title">INVOICE</div>
+                    <table class="invoice-meta-table">
+                        <tr>
+                            <td>DATE</td>
+                            <td>${formattedInvoiceDate}</td>
+                        </tr>
+                        <tr>
+                            <td>INVOICE #</td>
+                            <td>${displayInvoiceNumber}</td>
+                        </tr>
+                        <tr>
+                            <td>CUSTOMER ID</td>
+                            <td>${customerId}</td>
+                        </tr>
+                        <tr>
+                            <td>DUE DATE</td>
+                            <td>${formattedDueDate}</td>
+                        </tr>
+                    </table>
                 </div>
             </div>
             
             <!-- Products Table -->
-            <table class="products-table">
+            <table class="compact-products-table">
                 <thead>
                     <tr>
-                        <th>#</th>
-                        <th>Product/Service</th>
-                        <th>Qty</th>
-                        <th>Price</th>
-                        <th>GST %</th>
-                        <th>Total</th>
+                        <th>DESCRIPTION</th>
+                        <th>GST</th>
+                        <th>AMOUNT</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -464,25 +477,41 @@ function generateInvoicePreview(invoice, invoiceId, isPreview = false) {
             </table>
             
             <!-- Totals Section -->
-            <div class="totals-preview">
-                <div class="totals-row">
-                    <span>Subtotal:</span>
-                    <span>₹${invoice.subtotal.toFixed(2)}</span>
-                </div>
-                <div class="totals-row">
-                    <span>GST Total:</span>
-                    <span>₹${invoice.gstAmount.toFixed(2)}</span>
-                </div>
-                <div class="totals-row total">
-                    <span>Grand Total:</span>
-                    <span>₹${invoice.grandTotal.toFixed(2)}</span>
-                </div>
+            <div class="totals-section">
+                <table class="totals-table">
+                    <tr>
+                        <td>Subtotal</td>
+                        <td>₹${invoice.subtotal.toFixed(2)}</td>
+                    </tr>
+                    <tr>
+                        <td>GST Total</td>
+                        <td>₹${invoice.gstAmount.toFixed(2)}</td>
+                    </tr>
+                    <tr class="grand-total">
+                        <td><strong>TOTAL</strong></td>
+                        <td><strong>₹${invoice.grandTotal.toFixed(2)}</strong></td>
+                    </tr>
+                </table>
             </div>
             
-            <!-- Simple Footer -->
-            <div class="invoice-footer">
-                <p>Thank you for your business!</p>
-                <p class="terms">Payment due within 30 days</p>
+            <!-- Footer Section -->
+            <div class="invoice-footer-compact">
+                <div class="payment-instructions">
+                    <strong>Make all checks payable to:</strong><br>
+                    SHIVAM INDANE GAS
+                </div>
+                
+                <div class="comments-section">
+                    <strong>OTHER COMMENTS</strong><br>
+                    1. Total payment due in 30 days.<br>
+                    2. Please include invoice number with payment.
+                </div>
+                
+                <div class="contact-info">
+                    <strong>Questions?</strong><br>
+                    Contact: +91 98765 43210<br>
+                    Thank You For Your Business!
+                </div>
             </div>
         </div>
     `;
