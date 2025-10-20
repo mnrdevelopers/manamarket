@@ -325,28 +325,36 @@ function loadDashboardData() {
 document.addEventListener('DOMContentLoaded', function() {
     console.log('DOM loaded, checking authentication...');
     
-    // Hide all pages immediately to prevent flicker
-    hideAllPages();
+    // Wait for auth to be available
+    const initAppSafely = () => {
+        if (typeof auth === 'undefined' || !auth) {
+            console.log('Auth not ready yet, waiting...');
+            setTimeout(initAppSafely, 100);
+            return;
+        }
+        
+        console.log('Auth is ready, proceeding with app initialization');
+        
+        // Hide all pages immediately to prevent flicker
+        hideAllPages();
+        
+        // Check if user is already authenticated
+        if (auth.currentUser) {
+            console.log('User already authenticated, initializing app');
+            initApp();
+        } else {
+            console.log('No user authenticated, auth observer will handle redirect');
+            // Hide loading screen after a timeout
+            setTimeout(() => {
+                const loadingScreen = document.getElementById('loading-screen');
+                if (loadingScreen) {
+                    loadingScreen.classList.add('hidden');
+                }
+            }, 1000);
+        }
+    };
     
-    // Auth observer in auth.js will handle the rest
-    // It will either:
-    // 1. Redirect to auth.html if not authenticated
-    // 2. Initialize the app if authenticated
-    
-    // Check if user is already authenticated
-    if (auth.currentUser) {
-        console.log('User already authenticated, initializing app');
-        initApp();
-    } else {
-        console.log('No user authenticated, auth observer will handle redirect');
-        // Hide loading screen after a timeout
-        setTimeout(() => {
-            const loadingScreen = document.getElementById('loading-screen');
-            if (loadingScreen) {
-                loadingScreen.classList.add('hidden');
-            }
-        }, 1000);
-    }
+    initAppSafely();
 });
 
 // Initialize page-specific functionality when page becomes active
