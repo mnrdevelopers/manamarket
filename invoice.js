@@ -358,7 +358,7 @@ function viewInvoice(invoiceId) {
         });
 }
 
-// Print invoice
+// Print invoice with compact layout
 function printInvoice(invoiceId) {
     db.collection('invoices').doc(invoiceId).get()
         .then((doc) => {
@@ -367,7 +367,13 @@ function printInvoice(invoiceId) {
                 
                 // Wait for the preview to render, then print
                 setTimeout(() => {
-                    window.print();
+                    // Ensure modal is visible for printing
+                    document.getElementById('invoice-preview-modal').classList.remove('hidden');
+                    
+                    // Small delay to ensure rendering, then print
+                    setTimeout(() => {
+                        window.print();
+                    }, 100);
                 }, 500);
             } else {
                 showMessage('Invoice not found', 'error');
