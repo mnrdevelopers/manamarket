@@ -487,10 +487,43 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('invoice-preview-modal').classList.add('hidden');
     });
     
- // Print invoice from preview - Fixed
+// Print invoice from preview - Fixed
 document.getElementById('print-invoice-btn').addEventListener('click', function() {
-    // Simply use window.print() for the current preview
-    window.print();
+    // For preview invoices, we'll use the new window approach
+    const invoiceId = 'PREVIEW-' + Date.now();
+    const tempInvoice = {
+        customerName: document.getElementById('customer-name').value,
+        customerMobile: document.getElementById('customer-mobile').value,
+        products: [],
+        subtotal: parseFloat(document.getElementById('subtotal-amount').textContent.replace('₹', '')) || 0,
+        gstAmount: parseFloat(document.getElementById('gst-amount').textContent.replace('₹', '')) || 0,
+        grandTotal: parseFloat(document.getElementById('grand-total').textContent.replace('₹', '')) || 0,
+        createdAt: new Date()
+    };
+    
+    // Get products from form
+    const productRows = document.querySelectorAll('.product-row');
+    productRows.forEach(row => {
+        const productName = row.querySelector('.product-name').value;
+        const quantity = parseFloat(row.querySelector('.product-quantity').value) || 0;
+        const price = parseFloat(row.querySelector('.product-price').value) || 0;
+        const gst = parseFloat(row.querySelector('.product-gst').value) || 0;
+        const totalElement = row.querySelector('.product-total').value;
+        const total = totalElement ? parseFloat(totalElement.replace('₹', '')) : 0;
+        
+        if (productName.trim()) {
+            tempInvoice.products.push({
+                name: productName,
+                quantity: quantity,
+                price: price,
+                gst: gst,
+                total: total
+            });
+        }
+    });
+    
+    // Use the print function with temporary data
+    const printWindow = createPrintWindow(tempInvoice, invoiceId);
 });
 
 // Reliable print function that opens new window
