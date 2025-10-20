@@ -61,11 +61,17 @@ function initInvoiceForm() {
     // Handle form submission
     document.getElementById('invoice-form').addEventListener('submit', saveInvoice);
     
+    // Initialize product search
+    initProductSearch();
+    
     // Initialize with one product row
     addProductRow();
     
     // Display next invoice number
     displayNextInvoiceNumber();
+    
+    // Load available products for search
+    loadAvailableProducts();
 }
 
 // Display next available invoice number
@@ -567,3 +573,128 @@ document.addEventListener('DOMContentLoaded', () => {
         window.print();
     });
 });
+
+// Product search functionality for invoice form
+function initProductSearch() {
+    const searchInput = document.getElementById('product-search');
+    const searchResults = document.getElementById('product-search-results');
+    
+    if (!searchInput || !searchResults) return;
+    
+    searchInput.addEventListener('input', debounce(function(e) {
+        const searchTerm = e.target.value.trim();
+        
+        if (searchTerm.length < 2) {
+            searchResults.style.display = 'none';
+            return;
+        }
+        
+        searchProducts(searchTerm, searchResults);
+    }, 300));
+    
+    // Close search results when clicking outside
+    document.addEventListener('click', function(e) {
+        if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
+            searchResults.style.display = 'none';
+        }
+    });
+}
+
+// Search products from available inventory
+function searchProducts(searchTerm, resultsContainer) {
+    if (!window.availableProducts || window.availableProducts.length === 0) {
+        resultsContainer.innerHTML = '<div class="product-search-item">No products available. Add products in Stock Management.</div>';
+        resultsContainer.style.display = 'block';
+        return;
+    }
+    
+    const filteredProducts = window.availableProducts.filter(product => 
+        product.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
+        product.stock > 0 // Only show products in stock
+    );
+    
+    if (filteredProducts.length === 0) {
+        resultsContainer.innerHTML = '<div class="product-search-item">No matching products found.</div>';
+    } else {
+        resultsContainer.innerHTML = filteredProducts.map(product => `
+            <div class="product-search-item" 
+                 data-name="${product.name}" 
+                 data-price="${product.price}" 
+                 data-gst="${product.gst}">
+                <span class="product-search-name">${product.name}</span>
+                <span class="product-search-price">₹${product.price.toFixed(2)} (${product.gst}% GST)</span>
+            </div>
+        `).join('');
+        
+        // Add click event listeners
+        resultsContainer.querySelectorAll('.product-search-item').forEach(item => {
+            item.addEventListener('click', function() {
+                const name = this.getAttribute('data-name');
+                const price = this.getAttribute('data-price');
+                const gst = this.getAttribute('data-gst');
+                
+                addProductFromSearch(name, price, gst);
+                resultsContainer.style.display = 'none';
+                document.getElementById('product-search').value = '';
+            });
+        });
+    }
+    
+    resultsContainer.style.display = 'block';
+}
+
+// Add product from search results
+function addProductFromSearch(name, price, gst) {
+    addProductRow();
+    
+    // Get the last added row
+    const productRows = document.querySelectorAll('.product-row');
+    const lastRow = productRows[productRows.length - 1];
+    
+    // Fill the row with product data
+    lastRow.querySelector('.product-name').value = name;
+    lastRow.querySelector('.product-price').value = price;
+    lastRow.querySelector('.product-gst').value = gst;
+    
+    // Trigger calculation
+    calculateProductTotal(lastRow);
+    calculateTotals();
+}
+
+// Debounce function for search
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
+function loadAvailableProducts() {
+    const user = auth.currentUser;
+    if (!user) return;
+
+    db.collection('products')
+        .where('createdBy', '==', user.uid)
+        .where('stock', '>', 0) // Only products with stock
+        .get()
+        .then((querySnapshot) => {
+            window.availableProducts = [];
+            querySnapshot.forEach((doc) => {
+                window.availableProducts.push({
+                    id: doc.id,
+                    ...doc.data()
+                });
+            });
+            console.log(`Loaded ${window.availableProducts.length} available products for search`);
+        })
+        .catch((error) => {
+            console.error('Error loading products for search:', error);
+            window.availableProducts = [];
+        });
+}
+
