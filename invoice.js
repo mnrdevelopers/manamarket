@@ -378,7 +378,7 @@ function printInvoice(invoiceId) {
         });
 }
 
-// Generate invoice preview HTML
+// Generate clean professional invoice preview
 function generateInvoicePreview(invoice, invoiceId, isPreview = false) {
     const previewContent = document.getElementById('invoice-preview-content');
     
@@ -414,78 +414,75 @@ function generateInvoicePreview(invoice, invoiceId, isPreview = false) {
     
     previewContent.innerHTML = `
         <div class="invoice-preview-content">
+            <!-- Simple Professional Header -->
             <div class="invoice-header-preview">
                 <div class="company-info">
-                    <div class="company-logo">
-                        <h2>SHIVAM INDANE GAS</h2>
-                        <div class="invoice-badge">INVOICE</div>
-                    </div>
+                    <h2>SHIVAM INDANE GAS</h2>
                     <p>Professional Gas Services</p>
-                    <p>123 Business Street, City, State 12345</p>
-                    <p>Phone: +91 98765 43210 | Email: info@shivamindanegas.com</p>
                 </div>
                 <div class="invoice-meta">
-                    <div class="invoice-number-display">
-                        <span class="invoice-number-label">INVOICE #</span>
-                        <span class="invoice-number-value">${displayInvoiceNumber}</span>
+                    <div class="invoice-details-meta">
+                        <div class="invoice-meta-row">
+                            <strong>Invoice #:</strong> ${displayInvoiceNumber}
+                        </div>
+                        <div class="invoice-meta-row">
+                            <strong>Date:</strong> ${invoiceDate}
+                        </div>
+                        ${invoice.status ? `
+                        <div class="invoice-meta-row">
+                            <strong>Status:</strong> <span class="invoice-status">${invoice.status}</span>
+                        </div>
+                        ` : ''}
                     </div>
-                    <div class="invoice-date-display">
-                        <span class="invoice-date-label">DATE</span>
-                        <span class="invoice-date-value">${invoiceDate}</span>
-                    </div>
-                    ${invoice.status ? `<div class="invoice-status status-${invoice.status}">${invoice.status.toUpperCase()}</div>` : ''}
                 </div>
             </div>
             
-            <div class="invoice-details">
+            <!-- Customer Information -->
+            <div class="customer-section">
                 <div class="customer-info-preview">
                     <h4>Bill To:</h4>
                     <p><strong>${invoice.customerName}</strong></p>
                     <p>Mobile: ${invoice.customerMobile}</p>
                 </div>
-                
-                <table class="products-table">
-                    <thead>
-                        <tr>
-                            <th>#</th>
-                            <th>Product/Service</th>
-                            <th>Quantity</th>
-                            <th>Price</th>
-                            <th>GST %</th>
-                            <th>Total</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${productsRows}
-                    </tbody>
-                </table>
-                
-                <div class="totals-preview">
-                    <div class="totals-row">
-                        <span>Subtotal:</span>
-                        <span>₹${invoice.subtotal.toFixed(2)}</span>
-                    </div>
-                    <div class="totals-row">
-                        <span>GST Total:</span>
-                        <span>₹${invoice.gstAmount.toFixed(2)}</span>
-                    </div>
-                    <div class="totals-row total">
-                        <span>Grand Total:</span>
-                        <span>₹${invoice.grandTotal.toFixed(2)}</span>
-                    </div>
+            </div>
+            
+            <!-- Products Table -->
+            <table class="products-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Product/Service</th>
+                        <th>Qty</th>
+                        <th>Price</th>
+                        <th>GST %</th>
+                        <th>Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${productsRows}
+                </tbody>
+            </table>
+            
+            <!-- Totals Section -->
+            <div class="totals-preview">
+                <div class="totals-row">
+                    <span>Subtotal:</span>
+                    <span>₹${invoice.subtotal.toFixed(2)}</span>
+                </div>
+                <div class="totals-row">
+                    <span>GST Total:</span>
+                    <span>₹${invoice.gstAmount.toFixed(2)}</span>
+                </div>
+                <div class="totals-row total">
+                    <span>Grand Total:</span>
+                    <span>₹${invoice.grandTotal.toFixed(2)}</span>
                 </div>
             </div>
             
+            <!-- Simple Footer -->
             <div class="invoice-footer">
-                <div class="payment-info">
-                    <h4>Payment Information</h4>
-                    <p>Bank: State Bank of India</p>
-                    <p>Account: 12345678901 | IFSC: SBIN0000123</p>
-                </div>
-                <div class="thank-you-message">
-                    <p>Thank you for your business!</p>
-                    <p class="terms">Terms: Payment due within 30 days</p>
-                </div>
+                <p>Thank you for your business!</p>
+                <p class="terms">Payment due within 30 days</p>
             </div>
         </div>
     `;
