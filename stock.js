@@ -351,8 +351,14 @@ function addProductFromStock(name, price, gst) {
     calculateTotals();
 }
 
-// Initialize stock functionality when DOM is loaded
-document.addEventListener('DOMContentLoaded', () => {
+// Safe initialization for stock page
+function initStockPageSafely() {
+    // Wait for auth to be available
+    if (typeof auth === 'undefined' || !auth) {
+        setTimeout(initStockPageSafely, 100);
+        return;
+    }
+    
     console.log('Stock.js loaded, checking for stock page...');
     
     // Check if we're on the stock page and wait for auth
@@ -379,7 +385,9 @@ document.addEventListener('DOMContentLoaded', () => {
         
         checkAuthAndInit();
     }
-});
+}
+
+document.addEventListener('DOMContentLoaded', initStockPageSafely);
 
 // Also initialize when page becomes active (for SPA navigation)
 document.addEventListener('visibilitychange', function() {
