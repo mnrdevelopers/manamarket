@@ -51,6 +51,7 @@ async function getNextInvoiceNumber() {
 }
 
 // Initialize invoice form functionality
+// Initialize invoice form functionality
 function initInvoiceForm() {
     // Add product row
     document.getElementById('add-product-btn').addEventListener('click', addProductRow);
@@ -70,8 +71,15 @@ function initInvoiceForm() {
     // Display next invoice number
     displayNextInvoiceNumber();
     
-    // Load available products for search
+    // Load available products for search - This is crucial
     loadAvailableProducts();
+    
+    // Also load products when the page becomes visible
+    document.addEventListener('visibilitychange', function() {
+        if (!document.hidden && document.getElementById('invoice-page').classList.contains('active')) {
+            loadAvailableProducts();
+        }
+    });
 }
 
 // Display next available invoice number
@@ -738,5 +746,27 @@ async function updateProductStock(products) {
     }
 }
 
+// Make this function globally accessible
+window.loadAvailableProducts = function() {
+    const user = auth.currentUser;
+    if (!user) return;
 
-
+    db.collection('products')
+        .where('createdBy', '==', user.uid)
+        .where('stock', '>', 0) // Only products with stock
+        .get()
+        .then((querySnapshot) => {
+            window.availableProducts = [];
+            querySnapshot.forEach((doc) => {
+                window.availableProducts.push({
+                    id: doc.id,
+                    ...doc.data()
+                });
+            });
+            console.log(`Loaded ${window.availableProducts.length} available products for search`);
+        })
+        .catch((error) => {
+            console.error('Error loading products for search:', error);
+            window.availableProducts = [];
+        });
+}
