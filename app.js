@@ -160,7 +160,12 @@ function setupNavigation() {
         }
     });
 
-  // Stock management navigation
+ // Stock management navigation
+const stockNav1 = document.getElementById('stock-management-nav');
+const stockNav2 = document.getElementById('stock-management-nav-2');
+const stockNav3 = document.getElementById('stock-management-nav-3');
+const stockNav4 = document.getElementById('stock-management-nav-4');
+
 [stockNav1, stockNav2, stockNav3, stockNav4].forEach((nav, index) => {
     if (nav) {
         nav.addEventListener('click', function(e) {
