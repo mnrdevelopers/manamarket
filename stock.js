@@ -1,3 +1,24 @@
+// Safe access to auth and db
+function getAuth() {
+    if (typeof auth !== 'undefined' && auth) {
+        return auth;
+    }
+    if (window.auth) {
+        return window.auth;
+    }
+    throw new Error('Auth not initialized');
+}
+
+function getDb() {
+    if (typeof db !== 'undefined' && db) {
+        return db;
+    }
+    if (window.db) {
+        return window.db;
+    }
+    throw new Error('Database not initialized');
+}
+
 // Stock Management System
 
 let currentProducts = [];
