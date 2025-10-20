@@ -160,7 +160,7 @@ function setupNavigation() {
         }
     });
 
-   // Stock management navigation
+  // Stock management navigation
 [stockNav1, stockNav2, stockNav3, stockNav4].forEach((nav, index) => {
     if (nav) {
         nav.addEventListener('click', function(e) {
