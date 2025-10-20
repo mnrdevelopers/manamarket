@@ -148,31 +148,24 @@ function displayInvoicesTable(filteredInvoices = null) {
         
         const invoiceNumber = invoice.invoiceNumber || invoice.id.substring(0, 8) + '...';
         
-        tableHTML += `
-            <tr>
-                <td>
-                    <div class="invoice-number-cell">
-                        <span class="invoice-number">${invoiceNumber}</span>
-                        ${invoice.status ? `<span class="invoice-status-badge status-${invoice.status}">${invoice.status}</span>` : ''}
-                    </div>
-                </td>
-                <td>${invoice.customerName}</td>
-                <td>${invoice.customerMobile}</td>
-                <td>${invoiceDate}</td>
-                <td class="amount-cell">₹${invoice.grandTotal.toFixed(2)}</td>
-                <td class="invoice-actions-cell">
-                    <button class="btn-view view-invoice-details" data-id="${invoice.id}" title="View Invoice">
-                        <span class="btn-icon">👁️</span> View
-                    </button>
-                    <button class="btn-edit edit-invoice" data-id="${invoice.id}" title="Edit Invoice">
-                        <span class="btn-icon">✏️</span> Edit
-                    </button>
-                    <button class="btn-delete delete-invoice" data-id="${invoice.id}" title="Delete Invoice">
-                        <span class="btn-icon">🗑️</span> Delete
-                    </button>
-                </td>
-            </tr>
-        `;
+tableHTML += `
+    <tr>
+        <td>
+            <div class="invoice-number-simple">
+                <span class="invoice-number">${invoiceNumber}</span>
+            </div>
+        </td>
+        <td>${invoice.customerName}</td>
+        <td>${invoice.customerMobile}</td>
+        <td>${invoiceDate}</td>
+        <td class="amount-cell">₹${invoice.grandTotal.toFixed(2)}</td>
+        <td class="invoice-actions-cell">
+            <button class="btn-view view-invoice-details" data-id="${invoice.id}">View</button>
+            <button class="btn-edit edit-invoice" data-id="${invoice.id}">Edit</button>
+            <button class="btn-delete delete-invoice" data-id="${invoice.id}">Delete</button>
+        </td>
+    </tr>
+`;
     });
 
     tableBody.innerHTML = tableHTML;
