@@ -91,12 +91,17 @@ function loadAllProducts() {
         })
         .catch((error) => {
             console.error('Error loading products:', error);
-            tableBody.innerHTML = '<tr><td colspan="8" class="no-products-found">Error loading products</td></tr>';
             
-            // If collection doesn't exist yet, initialize with empty array
-            if (error.code === 'failed-precondition') {
+            if (error.code === 'permission-denied') {
+                tableBody.innerHTML = '<tr><td colspan="8" class="no-products-found">Permission denied. Please check Firebase security rules.</td></tr>';
+                showMessage('Database permission denied. Please contact administrator.', 'error');
+            } else if (error.code === 'failed-precondition') {
+                // Collection doesn't exist yet - initialize with empty array
                 currentProducts = [];
                 displayProductsTable();
+            } else {
+                tableBody.innerHTML = '<tr><td colspan="8" class="no-products-found">Error loading products</td></tr>';
+                showMessage('Error loading products: ' + error.message, 'error');
             }
         });
 }
@@ -225,6 +230,7 @@ function editProduct(productId) {
 }
 
 // Save product (add or update)
+// Save product (add or update)
 function saveProduct(e) {
     if (e) e.preventDefault();
     
@@ -243,7 +249,7 @@ function saveProduct(e) {
         stock: parseInt(document.getElementById('product-stock').value),
         minStock: parseInt(document.getElementById('product-min-stock').value) || 10,
         description: document.getElementById('product-description').value,
-        createdBy: user.uid,
+        createdBy: user.uid, // Make sure this is included
         updatedAt: firebase.firestore.FieldValue.serverTimestamp()
     };
     
@@ -259,9 +265,9 @@ function saveProduct(e) {
         // Update existing product
         promise = db.collection('products').doc(currentEditingProductId).update(productData);
     } else {
-        // Add new product
+        // Add new product - include createdAt
         productData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
-        promise = db.collection('products').doc().set(productData);
+        promise = db.collection('products').add(productData);
     }
     
     promise
