@@ -101,7 +101,7 @@ function debounce(func, wait) {
 
 // Load all invoices for the current user
 function loadAllInvoices() {
-    const user = auth.currentUser;
+    const user = getAuth().currentUser;
     if (!user) {
         showMessage('Please log in to view invoices', 'error');
         return;
