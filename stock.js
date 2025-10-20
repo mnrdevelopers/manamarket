@@ -230,7 +230,6 @@ function editProduct(productId) {
 }
 
 // Save product (add or update)
-// Save product (add or update)
 function saveProduct(e) {
     if (e) e.preventDefault();
     
@@ -249,7 +248,7 @@ function saveProduct(e) {
         stock: parseInt(document.getElementById('product-stock').value),
         minStock: parseInt(document.getElementById('product-min-stock').value) || 10,
         description: document.getElementById('product-description').value,
-        createdBy: user.uid, // Make sure this is included
+        createdBy: user.uid,
         updatedAt: firebase.firestore.FieldValue.serverTimestamp()
     };
     
@@ -276,6 +275,14 @@ function saveProduct(e) {
             showMessage(`Product ${action} successfully!`, 'success');
             closeProductModalHandler();
             loadAllProducts(); // Reload the list
+            
+            // IMPORTANT: Refresh the product cache for invoice form search
+            updateProductCache();
+            
+            // Also trigger a manual refresh of available products for invoice search
+            if (typeof loadAvailableProducts === 'function') {
+                loadAvailableProducts();
+            }
         })
         .catch((error) => {
             showMessage(`Error ${currentEditingProductId ? 'updating' : 'adding'} product: ` + error.message, 'error');
