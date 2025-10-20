@@ -523,10 +523,18 @@ function viewInvoice(invoiceId) {
         });
 }
 
-// Initialize invoices functionality when DOM is loaded
-document.addEventListener('DOMContentLoaded', () => {
+// Safe initialization for invoices page
+function initInvoicesPageSafely() {
+    // Wait for auth to be available
+    if (typeof auth === 'undefined' || !auth) {
+        setTimeout(initInvoicesPageSafely, 100);
+        return;
+    }
+    
     // Check if we're on the invoices page and initialize
     if (document.getElementById('invoices-page')) {
         initInvoicesPage();
     }
-});
+}
+
+document.addEventListener('DOMContentLoaded', initInvoicesPageSafely);
