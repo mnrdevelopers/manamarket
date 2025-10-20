@@ -280,7 +280,7 @@ function loadDashboardData() {
 
     console.log('Loading dashboard data for user:', user.uid);
 
-    // Load recent invoices directly (don't rely on external function)
+    // Load recent invoices directly
     loadRecentInvoicesDirectly(user);
 
     // Get all invoices and filter locally to avoid complex queries
@@ -288,7 +288,7 @@ function loadDashboardData() {
         .where('createdBy', '==', user.uid)
         .get()
         .then((querySnapshot) => {
-            console.log('Found invoices:', querySnapshot.size);
+            console.log('Found invoices for stats:', querySnapshot.size);
             const today = new Date();
             today.setHours(0, 0, 0, 0);
             
@@ -323,7 +323,7 @@ function loadDashboardData() {
             console.log('Dashboard stats updated:', { todayInvoices, monthInvoices, totalRevenue });
         })
         .catch((error) => {
-            console.error('Error loading invoices for dashboard:', error);
+            console.error('Error loading invoices for dashboard stats:', error);
             todayInvoicesEl.textContent = '0';
             monthInvoicesEl.textContent = '0';
             totalRevenueEl.textContent = '₹0';
@@ -340,12 +340,14 @@ function loadDashboardData() {
 
         invoicesList.innerHTML = '<p>Loading invoices...</p>';
 
+        console.log('Loading recent invoices for user:', user.uid);
+
+        // Simple query without ordering first to test
         db.collection('invoices')
             .where('createdBy', '==', user.uid)
-            .orderBy('createdAt', 'desc')
-            .limit(10)
             .get()
             .then((querySnapshot) => {
+                console.log('Recent invoices query successful, found:', querySnapshot.size);
                 invoicesList.innerHTML = '';
                 
                 if (querySnapshot.empty) {
@@ -353,8 +355,26 @@ function loadDashboardData() {
                     return;
                 }
 
+                // Convert to array and sort locally
+                const invoices = [];
                 querySnapshot.forEach((doc) => {
-                    const invoice = doc.data();
+                    invoices.push({
+                        id: doc.id,
+                        ...doc.data()
+                    });
+                });
+
+                // Sort by date (newest first)
+                invoices.sort((a, b) => {
+                    const dateA = a.createdAt ? a.createdAt.toDate() : new Date(0);
+                    const dateB = b.createdAt ? b.createdAt.toDate() : new Date(0);
+                    return dateB - dateA;
+                });
+
+                // Show only last 5 invoices
+                const recentInvoices = invoices.slice(0, 5);
+
+                recentInvoices.forEach((invoice) => {
                     const invoiceDate = invoice.createdAt ? 
                         invoice.createdAt.toDate().toLocaleDateString() : 'Date not available';
                     
@@ -366,7 +386,7 @@ function loadDashboardData() {
                         <div class="invoice-date">${invoiceDate}</div>
                         <div class="invoice-amount">₹${invoice.grandTotal.toFixed(2)}</div>
                         <div class="invoice-actions">
-                            <button class="btn-secondary view-invoice-btn" data-id="${doc.id}">View</button>
+                            <button class="btn-secondary view-invoice-btn" data-id="${invoice.id}">View</button>
                         </div>
                     `;
                     
@@ -377,24 +397,28 @@ function loadDashboardData() {
                 document.querySelectorAll('.view-invoice-btn').forEach(button => {
                     button.addEventListener('click', function() {
                         const invoiceId = this.getAttribute('data-id');
-                        // Use the viewInvoice function from invoices.js if available
                         if (typeof viewInvoice === 'function') {
                             viewInvoice(invoiceId);
                         } else {
-                            console.log('viewInvoice function not available for invoice:', invoiceId);
+                            console.log('Opening invoice:', invoiceId);
+                            // Fallback: show basic alert
+                            alert('Invoice ID: ' + invoiceId);
                         }
                     });
                 });
             })
             .catch((error) => {
                 console.error('Error loading recent invoices:', error);
+                console.log('Error code:', error.code);
+                console.log('Error message:', error.message);
+                
                 if (error.code === 'failed-precondition') {
-                    // Collection doesn't exist yet - show empty state
+                    // Collection doesn't exist yet or needs index
                     invoicesList.innerHTML = '<p class="no-invoices">No invoices found. Create your first invoice!</p>';
                 } else if (error.code === 'permission-denied') {
-                    invoicesList.innerHTML = '<p class="no-invoices">No access to invoices</p>';
+                    invoicesList.innerHTML = '<p class="no-invoices">Please check database permissions</p>';
                 } else {
-                    invoicesList.innerHTML = '<p class="error">Error loading invoices</p>';
+                    invoicesList.innerHTML = '<p class="no-invoices">Unable to load invoices</p>';
                 }
             });
     }
