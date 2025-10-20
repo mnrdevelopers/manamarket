@@ -507,10 +507,12 @@ function generateInvoicePreview(invoice, invoiceId, isPreview = false) {
 
 // Initialize invoice functionality when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
-    initInvoiceForm();
+    // Only initialize if we're on the main app and user is authenticated
+    if (document.getElementById('invoice-page') && auth.currentUser) {
+        initInvoiceForm();
     
-    // Setup invoice preview modal
-    document.getElementById('preview-invoice-btn').addEventListener('click', function() {
+        // Setup invoice preview modal
+        document.getElementById('preview-invoice-btn').addEventListener('click', function() {
         // Validate form before preview
         const customerName = document.getElementById('customer-name').value;
         const customerMobile = document.getElementById('customer-mobile').value;
@@ -571,19 +573,20 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('invoice-preview-modal').classList.remove('hidden');
     });
     
-    // Close preview modal
-    document.getElementById('close-preview').addEventListener('click', function() {
-        document.getElementById('invoice-preview-modal').classList.add('hidden');
-    });
+     // Close preview modal
+        document.getElementById('close-preview').addEventListener('click', function() {
+            document.getElementById('invoice-preview-modal').classList.add('hidden');
+        });
     
     document.getElementById('close-preview-btn').addEventListener('click', function() {
-        document.getElementById('invoice-preview-modal').classList.add('hidden');
-    });
-    
-    // Print invoice from preview
-    document.getElementById('print-invoice-btn').addEventListener('click', function() {
-        window.print();
-    });
+            document.getElementById('invoice-preview-modal').classList.add('hidden');
+        });
+        
+        // Print invoice from preview
+        document.getElementById('print-invoice-btn').addEventListener('click', function() {
+            window.print();
+        });
+    }
 });
 
 // Product search functionality for invoice form
