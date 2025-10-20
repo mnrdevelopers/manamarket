@@ -310,18 +310,16 @@ function printInvoice(invoiceId) {
         });
 }
 
-// Generate invoice preview HTML
+// Generate invoice preview HTML - Updated for better print
 function generateInvoicePreview(invoice, invoiceId) {
     const previewContent = document.getElementById('invoice-preview-content');
     
-    // Format date - Handle both Firestore Timestamp and regular Date objects
+    // Format date
     let invoiceDate;
     if (invoice.createdAt) {
         if (typeof invoice.createdAt.toDate === 'function') {
-            // It's a Firestore Timestamp
             invoiceDate = invoice.createdAt.toDate().toLocaleDateString();
         } else {
-            // It's a regular Date object or string
             invoiceDate = new Date(invoice.createdAt).toLocaleDateString();
         }
     } else {
@@ -330,77 +328,85 @@ function generateInvoicePreview(invoice, invoiceId) {
     
     // Generate products table rows
     let productsRows = '';
-    invoice.products.forEach((product, index) => {
-        productsRows += `
-            <tr>
-                <td>${index + 1}</td>
-                <td>${product.name}</td>
-                <td>${product.quantity}</td>
-                <td>₹${product.price.toFixed(2)}</td>
-                <td>${product.gst}%</td>
-                <td>₹${product.total.toFixed(2)}</td>
-            </tr>
-        `;
+    let serialNumber = 1;
+    invoice.products.forEach((product) => {
+        // Only add product if it has a name
+        if (product.name && product.name.trim() !== '') {
+            productsRows += `
+                <tr>
+                    <td style="text-align: center;">${serialNumber}</td>
+                    <td>${product.name}</td>
+                    <td style="text-align: center;">${product.quantity}</td>
+                    <td style="text-align: right;">₹${product.price.toFixed(2)}</td>
+                    <td style="text-align: center;">${product.gst}%</td>
+                    <td style="text-align: right;">₹${product.total.toFixed(2)}</td>
+                </tr>
+            `;
+            serialNumber++;
+        }
     });
     
     previewContent.innerHTML = `
-        <div class="invoice-preview-content">
-            <div class="invoice-header-preview">
+        <div class="invoice-preview-content" style="font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px;">
+            <!-- Header Section -->
+            <div class="invoice-header-preview" style="display: flex; justify-content: space-between; margin-bottom: 30px; padding-bottom: 15px; border-bottom: 2px solid #000;">
                 <div class="company-info">
-                    <h2>SHIVAM INDANE GAS</h2>
-                    <p>Professional Gas Services</p>
-                    <p>123 Business Street, City, State 12345</p>
-                    <p>Phone: +91 98765 43210 | Email: info@shivamindanegas.com</p>
+                    <h2 style="color: #000; margin: 0 0 5px 0; font-size: 24px; font-weight: bold;">SHIVAM INDANE GAS</h2>
+                    <p style="margin: 2px 0; font-size: 14px;">Professional Gas Services</p>
+                    <p style="margin: 2px 0; font-size: 14px;">123 Business Street, City, State 12345</p>
+                    <p style="margin: 2px 0; font-size: 14px;">Phone: +91 98765 43210 | Email: info@shivamindanegas.com</p>
                 </div>
                 <div class="invoice-meta">
-                    <h3>INVOICE</h3>
-                    <p><strong>Invoice #:</strong> ${invoiceId}</p>
-                    <p><strong>Date:</strong> ${invoiceDate}</p>
+                    <h3 style="color: #000; margin: 0 0 10px 0; font-size: 20px; font-weight: bold;">INVOICE</h3>
+                    <p style="margin: 5px 0; font-size: 14px;"><strong>Invoice #:</strong> ${invoiceId}</p>
+                    <p style="margin: 5px 0; font-size: 14px;"><strong>Date:</strong> ${invoiceDate}</p>
                 </div>
             </div>
             
-            <div class="invoice-details">
-                <div class="customer-info-preview">
-                    <h4>Bill To:</h4>
-                    <p><strong>${invoice.customerName}</strong></p>
-                    <p>Mobile: ${invoice.customerMobile}</p>
+            <!-- Customer Information -->
+            <div class="customer-info-preview" style="margin-bottom: 25px;">
+                <h4 style="color: #000; margin-bottom: 10px; font-size: 16px; font-weight: bold;">Bill To:</h4>
+                <p style="margin: 5px 0; font-size: 14px;"><strong>${invoice.customerName}</strong></p>
+                <p style="margin: 5px 0; font-size: 14px;">Mobile: ${invoice.customerMobile}</p>
+            </div>
+            
+            <!-- Products Table -->
+            <table class="products-table" style="width: 100%; border-collapse: collapse; margin-bottom: 25px; font-size: 14px;">
+                <thead>
+                    <tr>
+                        <th style="border: 1px solid #000; padding: 10px; text-align: center; background: #f8f9fa;">#</th>
+                        <th style="border: 1px solid #000; padding: 10px; text-align: left; background: #f8f9fa;">Product/Service</th>
+                        <th style="border: 1px solid #000; padding: 10px; text-align: center; background: #f8f9fa;">Quantity</th>
+                        <th style="border: 1px solid #000; padding: 10px; text-align: right; background: #f8f9fa;">Price</th>
+                        <th style="border: 1px solid #000; padding: 10px; text-align: center; background: #f8f9fa;">GST %</th>
+                        <th style="border: 1px solid #000; padding: 10px; text-align: right; background: #f8f9fa;">Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${productsRows}
+                </tbody>
+            </table>
+            
+            <!-- Totals Section -->
+            <div class="totals-preview" style="width: 300px; margin-left: auto; background: #f8f9fa; padding: 15px; border: 1px solid #000;">
+                <div class="totals-row" style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                    <span>Subtotal:</span>
+                    <span>₹${invoice.subtotal.toFixed(2)}</span>
                 </div>
-                
-                <table class="products-table">
-                    <thead>
-                        <tr>
-                            <th>#</th>
-                            <th>Product/Service</th>
-                            <th>Quantity</th>
-                            <th>Price</th>
-                            <th>GST %</th>
-                            <th>Total</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${productsRows}
-                    </tbody>
-                </table>
-                
-                <div class="totals-preview">
-                    <div class="totals-row">
-                        <span>Subtotal:</span>
-                        <span>₹${invoice.subtotal.toFixed(2)}</span>
-                    </div>
-                    <div class="totals-row">
-                        <span>GST Total:</span>
-                        <span>₹${invoice.gstAmount.toFixed(2)}</span>
-                    </div>
-                    <div class="totals-row total">
-                        <span>Grand Total:</span>
-                        <span>₹${invoice.grandTotal.toFixed(2)}</span>
-                    </div>
+                <div class="totals-row" style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                    <span>GST Total:</span>
+                    <span>₹${invoice.gstAmount.toFixed(2)}</span>
+                </div>
+                <div class="totals-row total" style="display: flex; justify-content: space-between; font-weight: bold; font-size: 16px; border-top: 2px solid #000; padding-top: 8px; margin-top: 8px;">
+                    <span>Grand Total:</span>
+                    <span>₹${invoice.grandTotal.toFixed(2)}</span>
                 </div>
             </div>
             
-            <div class="invoice-footer">
-                <p>Thank you for your business!</p>
-                <p>Terms: Payment due within 30 days</p>
+            <!-- Footer -->
+            <div class="invoice-footer" style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #ccc; text-align: center;">
+                <p style="margin: 5px 0; font-size: 14px;">Thank you for your business!</p>
+                <p style="margin: 5px 0; font-size: 12px; color: #666;">Terms: Payment due within 30 days</p>
             </div>
         </div>
     `;
@@ -486,3 +492,150 @@ document.addEventListener('DOMContentLoaded', () => {
         window.print();
     });
 });
+
+// Simple print function that opens a new window for printing
+function printInvoiceSimple(invoiceId) {
+    db.collection('invoices').doc(invoiceId).get()
+        .then((doc) => {
+            if (doc.exists) {
+                const invoice = doc.data();
+                const printWindow = window.open('', '_blank');
+                
+                // Format date
+                let invoiceDate;
+                if (invoice.createdAt) {
+                    if (typeof invoice.createdAt.toDate === 'function') {
+                        invoiceDate = invoice.createdAt.toDate().toLocaleDateString();
+                    } else {
+                        invoiceDate = new Date(invoice.createdAt).toLocaleDateString();
+                    }
+                } else {
+                    invoiceDate = new Date().toLocaleDateString();
+                }
+                
+                // Generate products table rows
+                let productsRows = '';
+                let serialNumber = 1;
+                invoice.products.forEach((product) => {
+                    if (product.name && product.name.trim() !== '') {
+                        productsRows += `
+                            <tr>
+                                <td style="text-align: center; border: 1px solid #000; padding: 8px;">${serialNumber}</td>
+                                <td style="border: 1px solid #000; padding: 8px;">${product.name}</td>
+                                <td style="text-align: center; border: 1px solid #000; padding: 8px;">${product.quantity}</td>
+                                <td style="text-align: right; border: 1px solid #000; padding: 8px;">₹${product.price.toFixed(2)}</td>
+                                <td style="text-align: center; border: 1px solid #000; padding: 8px;">${product.gst}%</td>
+                                <td style="text-align: right; border: 1px solid #000; padding: 8px;">₹${product.total.toFixed(2)}</td>
+                            </tr>
+                        `;
+                        serialNumber++;
+                    }
+                });
+                
+                printWindow.document.write(`
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <title>Invoice ${invoiceId}</title>
+                        <style>
+                            body { 
+                                font-family: Arial, sans-serif; 
+                                margin: 20px; 
+                                color: #000; 
+                                background: white;
+                            }
+                            .invoice-container { max-width: 800px; margin: 0 auto; }
+                            .header { display: flex; justify-content: space-between; margin-bottom: 30px; padding-bottom: 15px; border-bottom: 2px solid #000; }
+                            .company-info h2 { margin: 0 0 5px 0; font-size: 24px; }
+                            .invoice-meta { text-align: right; }
+                            table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+                            th, td { border: 1px solid #000; padding: 10px; text-align: left; }
+                            th { background: #f0f0f0; font-weight: bold; }
+                            .totals { width: 300px; margin-left: auto; background: #f8f8f8; padding: 15px; border: 1px solid #000; }
+                            .totals-row { display: flex; justify-content: space-between; margin-bottom: 8px; }
+                            .total { font-weight: bold; font-size: 16px; border-top: 2px solid #000; padding-top: 8px; margin-top: 8px; }
+                            @media print {
+                                body { margin: 0; }
+                                .no-print { display: none; }
+                            }
+                        </style>
+                    </head>
+                    <body>
+                        <div class="invoice-container">
+                            <div class="header">
+                                <div class="company-info">
+                                    <h2>SHIVAM INDANE GAS</h2>
+                                    <p>Professional Gas Services</p>
+                                    <p>123 Business Street, City, State 12345</p>
+                                    <p>Phone: +91 98765 43210</p>
+                                </div>
+                                <div class="invoice-meta">
+                                    <h3>INVOICE</h3>
+                                    <p><strong>Invoice #:</strong> ${invoiceId}</p>
+                                    <p><strong>Date:</strong> ${invoiceDate}</p>
+                                </div>
+                            </div>
+                            
+                            <div class="customer-info">
+                                <h4>Bill To:</h4>
+                                <p><strong>${invoice.customerName}</strong></p>
+                                <p>Mobile: ${invoice.customerMobile}</p>
+                            </div>
+                            
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Product/Service</th>
+                                        <th>Qty</th>
+                                        <th>Price</th>
+                                        <th>GST %</th>
+                                        <th>Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${productsRows}
+                                </tbody>
+                            </table>
+                            
+                            <div class="totals">
+                                <div class="totals-row">
+                                    <span>Subtotal:</span>
+                                    <span>₹${invoice.subtotal.toFixed(2)}</span>
+                                </div>
+                                <div class="totals-row">
+                                    <span>GST Total:</span>
+                                    <span>₹${invoice.gstAmount.toFixed(2)}</span>
+                                </div>
+                                <div class="totals-row total">
+                                    <span>Grand Total:</span>
+                                    <span>₹${invoice.grandTotal.toFixed(2)}</span>
+                                </div>
+                            </div>
+                            
+                            <div class="footer" style="margin-top: 40px; text-align: center;">
+                                <p>Thank you for your business!</p>
+                            </div>
+                            
+                            <div class="no-print" style="margin-top: 20px; text-align: center;">
+                                <button onclick="window.print()" style="padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">Print Invoice</button>
+                                <button onclick="window.close()" style="padding: 10px 20px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer; margin-left: 10px;">Close</button>
+                            </div>
+                        </div>
+                    </body>
+                    </html>
+                `);
+                
+                printWindow.document.close();
+                // Auto-print after content loads
+                printWindow.onload = function() {
+                    printWindow.print();
+                };
+            } else {
+                showMessage('Invoice not found', 'error');
+            }
+        })
+        .catch((error) => {
+            showMessage('Error loading invoice: ' + error.message, 'error');
+        });
+}
