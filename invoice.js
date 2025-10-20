@@ -487,19 +487,23 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('invoice-preview-modal').classList.add('hidden');
     });
     
-    // Print invoice from preview
-    document.getElementById('print-invoice-btn').addEventListener('click', function() {
+   // Print invoice from preview - Updated
+document.getElementById('print-invoice-btn').addEventListener('click', function() {
+    // Use the new reliable print function
+    if (currentInvoiceToPrint) {
+        printInvoice(currentInvoiceToPrint);
+    } else {
+        // Fallback to window.print() if no specific invoice
         window.print();
-    });
+    }
 });
 
-// Simple print function that opens a new window for printing
-function printInvoiceSimple(invoiceId) {
+// Reliable print function that opens new window
+function printInvoice(invoiceId) {
     db.collection('invoices').doc(invoiceId).get()
         .then((doc) => {
             if (doc.exists) {
                 const invoice = doc.data();
-                const printWindow = window.open('', '_blank');
                 
                 // Format date
                 let invoiceDate;
@@ -516,6 +520,8 @@ function printInvoiceSimple(invoiceId) {
                 // Generate products table rows
                 let productsRows = '';
                 let serialNumber = 1;
+                let totalQuantity = 0;
+                
                 invoice.products.forEach((product) => {
                     if (product.name && product.name.trim() !== '') {
                         productsRows += `
@@ -529,45 +535,134 @@ function printInvoiceSimple(invoiceId) {
                             </tr>
                         `;
                         serialNumber++;
+                        totalQuantity += product.quantity || 0;
                     }
                 });
+                
+                // Create print window
+                const printWindow = window.open('', '_blank', 'width=800,height=600');
                 
                 printWindow.document.write(`
                     <!DOCTYPE html>
                     <html>
                     <head>
-                        <title>Invoice ${invoiceId}</title>
+                        <title>Invoice - SHIVAM INDANE GAS</title>
                         <style>
-                            body { 
-                                font-family: Arial, sans-serif; 
-                                margin: 20px; 
-                                color: #000; 
+                            @media print {
+                                body { 
+                                    margin: 0; 
+                                    padding: 15px;
+                                    font-family: Arial, sans-serif;
+                                    color: #000;
+                                    background: white;
+                                }
+                                .no-print { display: none !important; }
+                                .page-break { page-break-after: always; }
+                            }
+                            @media screen {
+                                body { 
+                                    margin: 20px; 
+                                    font-family: Arial, sans-serif;
+                                }
+                            }
+                            .invoice-container { 
+                                max-width: 800px; 
+                                margin: 0 auto; 
                                 background: white;
                             }
-                            .invoice-container { max-width: 800px; margin: 0 auto; }
-                            .header { display: flex; justify-content: space-between; margin-bottom: 30px; padding-bottom: 15px; border-bottom: 2px solid #000; }
-                            .company-info h2 { margin: 0 0 5px 0; font-size: 24px; }
-                            .invoice-meta { text-align: right; }
-                            table { width: 100%; border-collapse: collapse; margin: 20px 0; }
-                            th, td { border: 1px solid #000; padding: 10px; text-align: left; }
-                            th { background: #f0f0f0; font-weight: bold; }
-                            .totals { width: 300px; margin-left: auto; background: #f8f8f8; padding: 15px; border: 1px solid #000; }
-                            .totals-row { display: flex; justify-content: space-between; margin-bottom: 8px; }
-                            .total { font-weight: bold; font-size: 16px; border-top: 2px solid #000; padding-top: 8px; margin-top: 8px; }
-                            @media print {
-                                body { margin: 0; }
-                                .no-print { display: none; }
+                            .header { 
+                                display: flex; 
+                                justify-content: space-between; 
+                                margin-bottom: 30px; 
+                                padding-bottom: 15px; 
+                                border-bottom: 2px solid #000; 
+                            }
+                            .company-info h2 { 
+                                margin: 0 0 5px 0; 
+                                font-size: 24px; 
+                                color: #000;
+                            }
+                            .invoice-meta { 
+                                text-align: right; 
+                            }
+                            .invoice-meta h3 { 
+                                margin: 0 0 10px 0; 
+                                font-size: 20px; 
+                                color: #000;
+                            }
+                            table { 
+                                width: 100%; 
+                                border-collapse: collapse; 
+                                margin: 20px 0; 
+                                font-size: 14px;
+                            }
+                            th, td { 
+                                border: 1px solid #000; 
+                                padding: 10px; 
+                            }
+                            th { 
+                                background: #f8f8f8; 
+                                font-weight: bold; 
+                                text-align: left;
+                            }
+                            .totals { 
+                                width: 300px; 
+                                margin-left: auto; 
+                                background: #f8f8f8; 
+                                padding: 15px; 
+                                border: 1px solid #000; 
+                            }
+                            .totals-row { 
+                                display: flex; 
+                                justify-content: space-between; 
+                                margin-bottom: 8px; 
+                            }
+                            .total { 
+                                font-weight: bold; 
+                                font-size: 16px; 
+                                border-top: 2px solid #000; 
+                                padding-top: 8px; 
+                                margin-top: 8px; 
+                            }
+                            .footer { 
+                                margin-top: 40px; 
+                                text-align: center; 
+                                padding-top: 15px;
+                                border-top: 1px solid #ccc;
+                            }
+                            .print-btn { 
+                                padding: 10px 20px; 
+                                background: #007bff; 
+                                color: white; 
+                                border: none; 
+                                border-radius: 4px; 
+                                cursor: pointer; 
+                                margin: 10px 5px;
+                            }
+                            .close-btn { 
+                                padding: 10px 20px; 
+                                background: #6c757d; 
+                                color: white; 
+                                border: none; 
+                                border-radius: 4px; 
+                                cursor: pointer; 
+                                margin: 10px 5px;
+                            }
+                            .button-container {
+                                text-align: center;
+                                margin-top: 20px;
                             }
                         </style>
                     </head>
                     <body>
                         <div class="invoice-container">
+                            <!-- Header -->
                             <div class="header">
                                 <div class="company-info">
                                     <h2>SHIVAM INDANE GAS</h2>
-                                    <p>Professional Gas Services</p>
+                                    <p><strong>Professional Gas Services</strong></p>
                                     <p>123 Business Street, City, State 12345</p>
-                                    <p>Phone: +91 98765 43210</p>
+                                    <p>Phone: +91 98765 43210 | Email: info@shivamindanegas.com</p>
                                 </div>
                                 <div class="invoice-meta">
                                     <h3>INVOICE</h3>
@@ -576,21 +671,23 @@ function printInvoiceSimple(invoiceId) {
                                 </div>
                             </div>
                             
+                            <!-- Customer Information -->
                             <div class="customer-info">
-                                <h4>Bill To:</h4>
-                                <p><strong>${invoice.customerName}</strong></p>
-                                <p>Mobile: ${invoice.customerMobile}</p>
+                                <h4 style="margin-bottom: 10px;">Bill To:</h4>
+                                <p style="margin: 5px 0;"><strong>${invoice.customerName}</strong></p>
+                                <p style="margin: 5px 0;">Mobile: ${invoice.customerMobile}</p>
                             </div>
                             
+                            <!-- Products Table -->
                             <table>
                                 <thead>
                                     <tr>
-                                        <th>#</th>
-                                        <th>Product/Service</th>
-                                        <th>Qty</th>
-                                        <th>Price</th>
-                                        <th>GST %</th>
-                                        <th>Total</th>
+                                        <th style="width: 5%;">#</th>
+                                        <th style="width: 35%;">Product/Service</th>
+                                        <th style="width: 10%; text-align: center;">Qty</th>
+                                        <th style="width: 15%; text-align: right;">Price (₹)</th>
+                                        <th style="width: 10%; text-align: center;">GST %</th>
+                                        <th style="width: 15%; text-align: right;">Total (₹)</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -598,6 +695,7 @@ function printInvoiceSimple(invoiceId) {
                                 </tbody>
                             </table>
                             
+                            <!-- Totals Section -->
                             <div class="totals">
                                 <div class="totals-row">
                                     <span>Subtotal:</span>
@@ -613,24 +711,31 @@ function printInvoiceSimple(invoiceId) {
                                 </div>
                             </div>
                             
-                            <div class="footer" style="margin-top: 40px; text-align: center;">
-                                <p>Thank you for your business!</p>
+                            <!-- Footer -->
+                            <div class="footer">
+                                <p><strong>Thank you for your business!</strong></p>
+                                <p>Terms: Payment due within 30 days</p>
                             </div>
                             
-                            <div class="no-print" style="margin-top: 20px; text-align: center;">
-                                <button onclick="window.print()" style="padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">Print Invoice</button>
-                                <button onclick="window.close()" style="padding: 10px 20px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer; margin-left: 10px;">Close</button>
+                            <!-- Print Buttons (hidden when printing) -->
+                            <div class="button-container no-print">
+                                <button class="print-btn" onclick="window.print()">🖨️ Print Invoice</button>
+                                <button class="close-btn" onclick="window.close()">✕ Close Window</button>
                             </div>
                         </div>
+                        
+                        <script>
+                            // Auto-print after a short delay
+                            setTimeout(() => {
+                                window.print();
+                            }, 500);
+                        </script>
                     </body>
                     </html>
                 `);
                 
                 printWindow.document.close();
-                // Auto-print after content loads
-                printWindow.onload = function() {
-                    printWindow.print();
-                };
+                
             } else {
                 showMessage('Invoice not found', 'error');
             }
