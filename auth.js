@@ -1,3 +1,7 @@
+// Make auth and db globally accessible
+window.auth = auth;
+window.db = db;
+
 // Firebase Configuration
 const firebaseConfig = {
   apiKey: "AIzaSyAvCjDqOhhWb-zXfJGlrBdL53ViOVuXPzM",
