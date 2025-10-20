@@ -13,18 +13,21 @@ firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 
-// Global message display function
+// Enhanced message display function
 function showMessage(message, type) {
     const messageEl = document.getElementById('auth-message');
-    if (messageEl) {
-        messageEl.textContent = message;
-        messageEl.className = `message ${type}`;
-        messageEl.classList.remove('hidden');
+    const messageTextEl = document.getElementById('auth-message-text');
+    
+    if (messageEl && messageTextEl) {
+        messageTextEl.textContent = message;
+        messageEl.className = `alert alert-${type === 'error' ? 'danger' : type} alert-dismissible fade show`;
+        messageEl.classList.remove('d-none');
         
         // Auto-hide success messages after 3 seconds
         if (type === 'success') {
             setTimeout(() => {
-                messageEl.classList.add('hidden');
+                const bsAlert = new bootstrap.Alert(messageEl);
+                bsAlert.close();
             }, 3000);
         }
     }
