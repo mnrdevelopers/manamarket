@@ -58,51 +58,46 @@ function createMessageElement() {
     return messageEl;
 }
 
-// Generate professional invoice number
-function generateInvoiceNumber() {
-    const user = getAuth().currentUser;
-    if (!user) return 'INV-XXXX-XXXX';
-    
-    const timestamp = Date.now();
-    const random = Math.floor(Math.random() * 1000);
-    const year = currentYear.toString().slice(-2);
-    
-    // Format: INV-YY-XXXX
-    return `INV-${year}-${(timestamp % 10000).toString().padStart(4, '0')}`;
-}
-
-// Get next invoice number from Firestore
+// Get next sequential invoice number from Firestore
 async function getNextInvoiceNumber() {
     const user = auth.currentUser;
-    if (!user) return generateInvoiceNumber();
-    
+    if (!user) return generateFallbackInvoiceNumber();
+
     try {
-        // Try to get the latest invoice number
-        const snapshot = await db.collection('invoices')
-            .where('createdBy', '==', user.uid)
-            .orderBy('invoiceNumber', 'desc')
-            .limit(1)
-            .get();
+        // Get the counter document for this user
+        const counterRef = db.collection('invoiceCounters').doc(user.uid);
         
-        if (snapshot.empty) {
-            // First invoice for this user
-            return `INV-${currentYear.toString().slice(-2)}-0001`;
-        }
+        // Use Firestore transaction to ensure sequential numbers
+        let nextNumber = 1;
         
-        const lastInvoice = snapshot.docs[0].data();
-        const lastNumber = lastInvoice.invoiceNumber;
+        await db.runTransaction(async (transaction) => {
+            const counterDoc = await transaction.get(counterRef);
+            
+            if (counterDoc.exists) {
+                // Counter exists, increment it
+                const counterData = counterDoc.data();
+                nextNumber = counterData.lastNumber + 1;
+                transaction.update(counterRef, {
+                    lastNumber: nextNumber,
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+            } else {
+                // Counter doesn't exist, create it
+                transaction.set(counterRef, {
+                    lastNumber: nextNumber,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+            }
+        });
         
-        // Extract and increment the number
-        const match = lastNumber.match(/INV-\d+-(\d+)/);
-        if (match) {
-            const nextNum = parseInt(match[1]) + 1;
-            return `INV-${currentYear.toString().slice(-2)}-${nextNum.toString().padStart(4, '0')}`;
-        }
+        // Format: INV-YY-0001, INV-YY-0002, etc.
+        const year = currentYear.toString().slice(-2);
+        return `INV-${year}-${nextNumber.toString().padStart(4, '0')}`;
         
-        return generateInvoiceNumber();
     } catch (error) {
-        console.error('Error getting next invoice number:', error);
-        return generateInvoiceNumber();
+        console.error('Error getting sequential invoice number:', error);
+        return generateFallbackInvoiceNumber();
     }
 }
 
@@ -151,11 +146,31 @@ function initInvoiceForm() {
 
 // Display next available invoice number
 async function displayNextInvoiceNumber() {
-    const invoiceNumber = await getNextInvoiceNumber();
-    const invoiceHeader = document.querySelector('.invoice-header h2');
-    
-    if (invoiceHeader) {
-        invoiceHeader.innerHTML = `Create New Invoice <small class="invoice-number-preview">Next: ${invoiceNumber}</small>`;
+    try {
+        const user = auth.currentUser;
+        if (!user) return;
+        
+        const counterRef = db.collection('invoiceCounters').doc(user.uid);
+        const counterDoc = await counterRef.get();
+        
+        let nextNumber = 1;
+        if (counterDoc.exists) {
+            nextNumber = counterDoc.data().lastNumber + 1;
+        }
+        
+        const year = currentYear.toString().slice(-2);
+        const nextInvoiceNumber = `INV-${year}-${nextNumber.toString().padStart(4, '0')}`;
+        
+        const invoiceHeader = document.querySelector('.invoice-header h2');
+        if (invoiceHeader) {
+            invoiceHeader.innerHTML = `Create New Invoice <small class="invoice-number-preview">Next: ${nextInvoiceNumber}</small>`;
+        }
+    } catch (error) {
+        console.error('Error displaying next invoice number:', error);
+        const invoiceHeader = document.querySelector('.invoice-header h2');
+        if (invoiceHeader) {
+            invoiceHeader.innerHTML = `Create New Invoice <small class="invoice-number-preview">Next: Loading...</small>`;
+        }
     }
 }
 
