@@ -13,12 +13,9 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
 </head>
 <body>
-  <!-- Loading Screen -->
+    <!-- Loading Screen -->
 <div id="loading-screen" class="loading-screen">
     <div class="loading-content">
-        <div class="logo-image-container">
-            <img src="logo.png" alt="SHIVAM INDANE GAS" class="logo-image">
-        </div>
         <h2>SHIVAM INDANE GAS</h2>
         <p>Loading...</p>
         <div class="loading-spinner"></div>
@@ -26,31 +23,19 @@
 </div>
 
 <!-- Dashboard Page -->
-<header class="header">
-    <div class="header-content">
-        <div class="header-logo">
-            <img src="logo.png" alt="SHIVAM INDANE GAS" class="header-logo-image">
+<div id="dashboard-page" class="page">
+    <header class="header">
+        <div class="header-content">
             <h1>SHIVAM INDANE GAS</h1>
+            <nav>
+                <button id="dashboard-nav" class="nav-btn active">Dashboard</button>
+                <button id="create-invoice-nav" class="nav-btn">Create Invoice</button>
+                <button id="invoices-list-nav" class="nav-btn">All Invoices</button>
+                <button id="stock-management-nav" class="nav-btn">Stock Management</button>
+                <button id="logout-btn" class="btn-secondary">Logout</button>
+            </nav>
         </div>
-        <nav>
-            <button id="dashboard-nav" class="nav-btn active">
-                <i class="fas fa-tachometer-alt"></i> Dashboard
-            </button>
-            <button id="create-invoice-nav" class="nav-btn">
-                <i class="fas fa-file-invoice"></i> Create Invoice
-            </button>
-            <button id="invoices-list-nav" class="nav-btn">
-                <i class="fas fa-list"></i> All Invoices
-            </button>
-            <button id="stock-management-nav" class="nav-btn">
-                <i class="fas fa-boxes"></i> Stock Management
-            </button>
-            <button id="logout-btn" class="btn-secondary">
-                <i class="fas fa-sign-out-alt"></i> Logout
-            </button>
-        </nav>
-    </div>
-</header>
+    </header>
     
     <main class="main-content">
         <div class="dashboard-header">
