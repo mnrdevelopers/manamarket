@@ -887,6 +887,7 @@ function initInvoicePage() {
         });
     }
     
+    // Fix close buttons
     if (closePreview) {
         closePreview.addEventListener('click', function() {
             document.getElementById('invoice-preview-modal').classList.add('hidden');
@@ -899,9 +900,24 @@ function initInvoicePage() {
         });
     }
     
+    // Fix print button - Add this proper event listener
     if (printBtn) {
         printBtn.addEventListener('click', function() {
+            console.log('Print button clicked');
+            const printContent = document.getElementById('invoice-preview-content').innerHTML;
+            const originalContent = document.body.innerHTML;
+            
+            // Replace body content with print content
+            document.body.innerHTML = printContent;
+            
+            // Print
             window.print();
+            
+            // Restore original content
+            document.body.innerHTML = originalContent;
+            
+            // Re-initialize event listeners since we replaced the DOM
+            initInvoicePage();
         });
     }
 }
