@@ -1466,3 +1466,43 @@ body {
     visibility: hidden !important;
     opacity: 0 !important;
 }
+
+/* FontAwesome icon spacing */
+.btn-primary i,
+.btn-secondary i,
+.nav-btn i {
+    margin-right: 8px;
+}
+
+.btn-view i,
+.btn-edit i,
+.btn-delete i {
+    margin-right: 5px;
+}
+
+/* Close button icon */
+.close-btn {
+    background: none;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+    color: #7f8c8d;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.close-btn:hover {
+    color: #2c3e50;
+    background-color: #f5f5f5;
+    border-radius: 50%;
+}
+
+/* Ensure buttons with icons have proper alignment */
+button:not(.close-btn) {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
