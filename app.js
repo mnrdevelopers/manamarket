@@ -531,3 +531,70 @@ function setupGlobalPrintHandler() {
         }
     });
 }
+
+// Add this function to app.js - Global Modal Close Handler
+function setupGlobalModalHandlers() {
+    // Close modal when clicking close button, cancel button, or outside modal
+    document.addEventListener('click', function(e) {
+        // Close invoice preview modal
+        if (e.target.id === 'close-preview' || 
+            e.target.id === 'close-preview-btn' ||
+            e.target.closest('#close-preview') ||
+            e.target.closest('#close-preview-btn')) {
+            
+            e.preventDefault();
+            console.log('Closing invoice preview modal');
+            document.getElementById('invoice-preview-modal').classList.add('hidden');
+        }
+        
+        // Close delete confirmation modal
+        if (e.target.id === 'close-delete-modal' || 
+            e.target.id === 'cancel-delete-btn' ||
+            e.target.closest('#close-delete-modal') ||
+            e.target.closest('#cancel-delete-btn')) {
+            
+            e.preventDefault();
+            console.log('Closing delete confirmation modal');
+            document.getElementById('delete-confirm-modal').classList.add('hidden');
+        }
+        
+        // Close edit invoice modal
+        if (e.target.id === 'close-edit-modal' || 
+            e.target.id === 'cancel-edit-btn' ||
+            e.target.closest('#close-edit-modal') ||
+            e.target.closest('#cancel-edit-btn')) {
+            
+            e.preventDefault();
+            console.log('Closing edit invoice modal');
+            document.getElementById('edit-invoice-modal').classList.add('hidden');
+        }
+        
+        // Close product modal
+        if (e.target.id === 'close-product-modal' || 
+            e.target.id === 'cancel-product-btn' ||
+            e.target.closest('#close-product-modal') ||
+            e.target.closest('#cancel-product-btn')) {
+            
+            e.preventDefault();
+            console.log('Closing product modal');
+            document.getElementById('product-modal').classList.add('hidden');
+        }
+        
+        // Close modal when clicking outside content
+        if (e.target.classList.contains('modal')) {
+            console.log('Closing modal by clicking outside');
+            e.target.classList.add('hidden');
+        }
+    });
+    
+    // Also handle Escape key to close modals
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            const openModals = document.querySelectorAll('.modal:not(.hidden)');
+            openModals.forEach(modal => {
+                console.log('Closing modal with Escape key');
+                modal.classList.add('hidden');
+            });
+        }
+    });
+}
