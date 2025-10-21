@@ -169,7 +169,7 @@ function displayInvoicesTable(filteredInvoices = null) {
         
         const invoiceNumber = invoice.invoiceNumber || invoice.id.substring(0, 8) + '...';
         
-tableHTML += `
+        tableHTML += `
     <tr>
         <td>
             <div class="invoice-number-simple">
