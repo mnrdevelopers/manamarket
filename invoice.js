@@ -898,12 +898,6 @@ function initInvoicePage() {
             document.getElementById('invoice-preview-modal').classList.add('hidden');
         });
     }
-    
-    if (printBtn) {
-        printBtn.addEventListener('click', function() {
-            window.print();
-        });
-    }
 }
 
 // Safe initialization for invoice page
