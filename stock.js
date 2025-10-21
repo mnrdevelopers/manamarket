@@ -181,6 +181,7 @@ function displayProductsTable(filteredProducts = null) {
         </td>
     </tr>
 `;
+});
 
     tableBody.innerHTML = tableHTML;
 
