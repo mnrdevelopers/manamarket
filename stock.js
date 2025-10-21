@@ -159,29 +159,23 @@ function displayProductsTable(filteredProducts = null) {
         const statusClass = stockStatus === 'Out of Stock' ? 'stock-status-out' : 
                            stockStatus === 'Low Stock' ? 'stock-status-low' : 'stock-status-ok';
         
-      tableHTML += `
-    <tr>
-        <td>${product.name}</td>
-        <td>${product.category || 'Uncategorized'}</td>
-        <td class="amount-cell">₹${product.price.toFixed(2)}</td>
-        <td>${product.gst}%</td>
-        <td class="${stockStatus === 'Out of Stock' ? 'stock-status-out' : ''}">${product.stock}</td>
-        <td>${product.minStock || 10}</td>
-        <td class="${statusClass}">${stockStatus}</td>
-        <td class="invoice-actions-cell">
-            <button class="btn-edit edit-product" data-id="${product.id}">
-                <i class="fas fa-edit"></i> Edit
-            </button>
-            <button class="btn-delete delete-product" data-id="${product.id}">
-                <i class="fas fa-trash"></i> Delete
-            </button>
-            <button class="quick-add-product" data-id="${product.id}" data-name="${product.name}" data-price="${product.price}" data-gst="${product.gst}">
-                <i class="fas fa-cart-plus"></i> Add to Invoice
-            </button>
-        </td>
-    </tr>
-`;
-});
+        tableHTML += `
+            <tr>
+                <td>${product.name}</td>
+                <td>${product.category || 'Uncategorized'}</td>
+                <td class="amount-cell">₹${product.price.toFixed(2)}</td>
+                <td>${product.gst}%</td>
+                <td class="${stockStatus === 'Out of Stock' ? 'stock-status-out' : ''}">${product.stock}</td>
+                <td>${product.minStock || 10}</td>
+                <td class="${statusClass}">${stockStatus}</td>
+                <td class="invoice-actions-cell">
+                    <button class="btn-edit edit-product" data-id="${product.id}">Edit</button>
+                    <button class="btn-delete delete-product" data-id="${product.id}">Delete</button>
+                    <button class="quick-add-product" data-id="${product.id}" data-name="${product.name}" data-price="${product.price}" data-gst="${product.gst}">Add to Invoice</button>
+                </td>
+            </tr>
+        `;
+    });
 
     tableBody.innerHTML = tableHTML;
 
