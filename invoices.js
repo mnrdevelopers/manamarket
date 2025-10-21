@@ -193,6 +193,7 @@ tableHTML += `
         </td>
     </tr>
 `;
+    });
 
     tableBody.innerHTML = tableHTML;
 
