@@ -70,6 +70,9 @@ function hideAllPages() {
 // Initialize the application
 function initApp() {
     console.log('Initializing app...');
+
+     // Setup global print handler (ADD THIS LINE)
+    setupGlobalPrintHandler();
     
     // Check if user is authenticated
     if (!auth.currentUser) {
@@ -507,3 +510,24 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('Dashboard stats:', document.querySelector('.dashboard-stats'));
     console.log('Recent invoices:', document.getElementById('invoices-list'));
 });
+
+// Add this function to app.js - Perfect Print Solution
+function setupGlobalPrintHandler() {
+    // Remove any existing click listeners and use a single delegated handler
+    document.addEventListener('click', function(e) {
+        if (e.target.id === 'print-invoice-btn' || 
+            (e.target.closest && e.target.closest('#print-invoice-btn'))) {
+            
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            console.log('🖨️ Print button clicked - opening print dialog');
+            
+            // Small delay to ensure the preview is fully rendered
+            setTimeout(() => {
+                window.print();
+            }, 300);
+            
+            return false;
+        }
+    });
+}
