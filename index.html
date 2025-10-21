@@ -6,6 +6,7 @@
     <title>SHIVAM INDANE GAS - Professional Invoice System</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⛽</text></svg>">
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
@@ -39,10 +40,16 @@
     <main class="main-content">
         <div class="dashboard-header">
             <h2>Dashboard</h2>
-          <div class="quick-actions" style="margin-bottom: 20px; display: flex; gap: 15px; flex-wrap: wrap;">
-    <button id="quick-create-invoice" class="btn-primary">+ Create New Invoice</button>
-    <button id="quick-view-invoices" class="btn-secondary">📋 View All Invoices</button>
-    <button id="quick-stock-management" class="btn-secondary">📦 Stock Management</button>
+         <div class="quick-actions" style="margin-bottom: 20px; display: flex; gap: 15px; flex-wrap: wrap;">
+    <button id="quick-create-invoice" class="btn-primary">
+        <i class="fas fa-plus"></i> Create New Invoice
+    </button>
+    <button id="quick-view-invoices" class="btn-secondary">
+        <i class="fas fa-file-invoice"></i> View All Invoices
+    </button>
+    <button id="quick-stock-management" class="btn-secondary">
+        <i class="fas fa-boxes"></i> Stock Management
+    </button>
 </div>
             
             <div class="dashboard-stats">
@@ -94,7 +101,9 @@
         <small class="invoice-number-preview">Next: Loading...</small>
     </h2>
     <div style="margin-top: 10px;">
-        <button id="back-to-invoices" class="btn-secondary">← Back to Invoices</button>
+        <button id="back-to-invoices" class="btn-secondary">
+    <i class="fas fa-arrow-left"></i> Back to Invoices
+</button>
     </div>
 </div>
             
@@ -128,7 +137,9 @@
     <div id="products-container">
         <!-- Product rows will be added here dynamically -->
     </div>
-    <button type="button" id="add-product-btn" class="btn-secondary">Add Product Manually</button>
+   <button type="button" id="add-product-btn" class="btn-secondary">
+    <i class="fas fa-plus"></i> Add Product Manually
+</button>
 </div>
                 
                 <div class="invoice-summary">
@@ -146,10 +157,14 @@
                     </div>
                 </div>
                 
-                <div class="form-actions">
-                    <button type="submit" class="btn-primary">Save Invoice</button>
-                    <button type="button" id="preview-invoice-btn" class="btn-secondary">Preview Invoice</button>
-                </div>
+               <div class="form-actions">
+    <button type="submit" class="btn-primary">
+        <i class="fas fa-save"></i> Save Invoice
+    </button>
+    <button type="button" id="preview-invoice-btn" class="btn-secondary">
+        <i class="fas fa-eye"></i> Preview Invoice
+    </button>
+</div>
             </form>
         </main>
     </div>
@@ -174,7 +189,9 @@
             <h2>All Invoices</h2>
             <div class="invoices-actions">
                 <input type="text" id="search-invoices" placeholder="Search invoices..." class="search-input">
-                <button id="refresh-invoices" class="btn-secondary">Refresh</button>
+                <button id="refresh-invoices" class="btn-secondary">
+    <i class="fas fa-sync-alt"></i> Refresh
+</button>
             </div>
         </div>
         
