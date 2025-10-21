@@ -202,13 +202,16 @@ function setupLogoutButtons() {
         if (logoutBtn) {
             logoutBtn.addEventListener('click', function(e) {
                 e.preventDefault();
-                console.log('Logout button clicked:', btnId);
-                auth.signOut().then(() => {
-                    showMessage('Logged out successfully', 'success');
-                    // Auth observer will handle redirection
-                }).catch((error) => {
-                    showMessage('Error logging out: ' + error.message, 'error');
-                });
+                
+                // Show confirmation dialog
+                if (confirm('Are you sure you want to log out?')) {
+                    console.log('Logout button clicked:', btnId);
+                    auth.signOut().then(() => {
+                        showMessage('Logged out successfully', 'success');
+                    }).catch((error) => {
+                        showMessage('Error logging out: ' + error.message, 'error');
+                    });
+                }
             });
         }
     });
