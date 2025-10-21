@@ -1206,3 +1206,71 @@ html, body {
 #invoice-message {
     display: none !important;
 }
+
+/* Switch Logout Button Styles */
+.switch-logout-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 5px;
+    border-radius: 4px;
+    transition: background-color 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.switch-logout-btn:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.switch-logout-btn img {
+    width: 24px;
+    height: 24px;
+    filter: invert(1); /* Makes the image white */
+    transition: transform 0.3s ease;
+}
+
+.switch-logout-btn:hover img {
+    transform: scale(1.1);
+}
+
+/* Alternative: Using CSS-only switch icon */
+.switch-icon {
+    width: 24px;
+    height: 24px;
+    position: relative;
+    display: inline-block;
+}
+
+.switch-icon::before,
+.switch-icon::after {
+    content: '';
+    position: absolute;
+    background-color: white;
+    transition: all 0.3s ease;
+}
+
+.switch-icon::before {
+    width: 16px;
+    height: 2px;
+    top: 8px;
+    left: 4px;
+    transform: rotate(45deg);
+}
+
+.switch-icon::after {
+    width: 16px;
+    height: 2px;
+    top: 14px;
+    left: 4px;
+    transform: rotate(-45deg);
+}
+
+.switch-logout-btn:hover .switch-icon::before {
+    transform: rotate(-45deg);
+}
+
+.switch-logout-btn:hover .switch-icon::after {
+    transform: rotate(45deg);
+}
