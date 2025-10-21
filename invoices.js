@@ -181,13 +181,18 @@ tableHTML += `
         <td>${invoiceDate}</td>
         <td class="amount-cell">₹${invoice.grandTotal.toFixed(2)}</td>
         <td class="invoice-actions-cell">
-            <button class="btn-view view-invoice-details" data-id="${invoice.id}">View</button>
-            <button class="btn-edit edit-invoice" data-id="${invoice.id}">Edit</button>
-            <button class="btn-delete delete-invoice" data-id="${invoice.id}">Delete</button>
+            <button class="btn-view view-invoice-details" data-id="${invoice.id}">
+                <i class="fas fa-eye"></i> View
+            </button>
+            <button class="btn-edit edit-invoice" data-id="${invoice.id}">
+                <i class="fas fa-edit"></i> Edit
+            </button>
+            <button class="btn-delete delete-invoice" data-id="${invoice.id}">
+                <i class="fas fa-trash"></i> Delete
+            </button>
         </td>
     </tr>
 `;
-    });
 
     tableBody.innerHTML = tableHTML;
 
