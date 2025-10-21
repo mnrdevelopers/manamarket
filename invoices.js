@@ -65,7 +65,8 @@ function setupInvoicesEventListeners() {
         nextPageBtn.addEventListener('click', goToNextPage);
     }
 
-    // Add this line:
+     // Setup modal listeners
+    setupModalCloseListeners();
     setupEditModalListeners();
     
     // Delete confirmation modal
@@ -565,3 +566,45 @@ function initInvoicesPageSafely() {
 }
 
 document.addEventListener('DOMContentLoaded', initInvoicesPageSafely);
+
+function setupModalCloseListeners() {
+    // Close delete modal
+    const closeDeleteModal = document.getElementById('close-delete-modal');
+    const cancelDeleteBtn = document.getElementById('cancel-delete-btn');
+    
+    if (closeDeleteModal) {
+        closeDeleteModal.addEventListener('click', closeDeleteModalHandler);
+    }
+    
+    if (cancelDeleteBtn) {
+        cancelDeleteBtn.addEventListener('click', closeDeleteModalHandler);
+    }
+    
+    // Close edit modal
+    const closeEditModal = document.getElementById('close-edit-modal');
+    const cancelEditBtn = document.getElementById('cancel-edit-btn');
+    
+    if (closeEditModal) {
+        closeEditModal.addEventListener('click', closeEditModal);
+    }
+    
+    if (cancelEditBtn) {
+        cancelEditBtn.addEventListener('click', closeEditModal);
+    }
+    
+    // Close preview modal
+    const closePreview = document.getElementById('close-preview');
+    const closePreviewBtn = document.getElementById('close-preview-btn');
+    
+    if (closePreview) {
+        closePreview.addEventListener('click', function() {
+            document.getElementById('invoice-preview-modal').classList.add('hidden');
+        });
+    }
+    
+    if (closePreviewBtn) {
+        closePreviewBtn.addEventListener('click', function() {
+            document.getElementById('invoice-preview-modal').classList.add('hidden');
+        });
+    }
+}
