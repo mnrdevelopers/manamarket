@@ -601,3 +601,132 @@ function setupGlobalModalHandlers() {
         }
     });
 }
+
+// Make sure viewInvoice is available globally for dashboard
+window.viewInvoice = function(invoiceId) {
+    db.collection('invoices').doc(invoiceId).get()
+        .then((doc) => {
+            if (doc.exists) {
+                generateInvoicePreview(doc.data(), doc.id);
+                document.getElementById('invoice-preview-modal').classList.remove('hidden');
+            } else {
+                showMessage('Invoice not found', 'error');
+            }
+        })
+        .catch((error) => {
+            showMessage('Error loading invoice: ' + error.message, 'error');
+        });
+};
+
+// Also ensure generateInvoicePreview is available
+window.generateInvoicePreview = function(invoice, invoiceId, isPreview = false) {
+    const previewContent = document.getElementById('invoice-preview-content');
+    if (!previewContent) return;
+    
+    // Format date
+    let invoiceDate;
+    if (invoice.createdAt) {
+        if (typeof invoice.createdAt.toDate === 'function') {
+            invoiceDate = invoice.createdAt.toDate().toLocaleDateString();
+        } else {
+            invoiceDate = new Date(invoice.createdAt).toLocaleDateString();
+        }
+    } else {
+        invoiceDate = new Date().toLocaleDateString();
+    }
+    
+    // Use invoice number if available, otherwise use ID
+    const displayInvoiceNumber = invoice.invoiceNumber || invoiceId;
+    
+    // Generate products table rows
+    let productsRows = '';
+    if (invoice.products && invoice.products.length > 0) {
+        invoice.products.forEach((product, index) => {
+            productsRows += `
+                <tr>
+                    <td>${index + 1}</td>
+                    <td>${product.name}</td>
+                    <td>${product.quantity}</td>
+                    <td>₹${product.price.toFixed(2)}</td>
+                    <td>${product.gst}%</td>
+                    <td>₹${product.total.toFixed(2)}</td>
+                </tr>
+            `;
+        });
+    }
+    
+    previewContent.innerHTML = `
+        <div class="invoice-preview-content">
+            <!-- Simple Professional Header -->
+            <div class="invoice-header-preview">
+                <div class="company-info">
+                    <h2>SHIVAM INDANE GAS</h2>
+                    <p>Professional Gas Services</p>
+                </div>
+                <div class="invoice-meta">
+                    <div class="invoice-details-meta">
+                        <div class="invoice-meta-row">
+                            <strong>Invoice #:</strong> ${displayInvoiceNumber}
+                        </div>
+                        <div class="invoice-meta-row">
+                            <strong>Date:</strong> ${invoiceDate}
+                        </div>
+                        ${invoice.status ? `
+                        <div class="invoice-meta-row">
+                            <strong>Status:</strong> <span class="invoice-status">${invoice.status}</span>
+                        </div>
+                        ` : ''}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Customer Information -->
+            <div class="customer-section">
+                <div class="customer-info-preview">
+                    <h4>Bill To:</h4>
+                    <p><strong>${invoice.customerName}</strong></p>
+                    <p>Mobile: ${invoice.customerMobile}</p>
+                </div>
+            </div>
+            
+            <!-- Products Table -->
+            <table class="products-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Product/Service</th>
+                        <th>Qty</th>
+                        <th>Price</th>
+                        <th>GST %</th>
+                        <th>Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${productsRows}
+                </tbody>
+            </table>
+            
+            <!-- Totals Section -->
+            <div class="totals-preview">
+                <div class="totals-row">
+                    <span>Subtotal:</span>
+                    <span>₹${invoice.subtotal.toFixed(2)}</span>
+                </div>
+                <div class="totals-row">
+                    <span>GST Total:</span>
+                    <span>₹${invoice.gstAmount.toFixed(2)}</span>
+                </div>
+                <div class="totals-row total">
+                    <span>Grand Total:</span>
+                    <span>₹${invoice.grandTotal.toFixed(2)}</span>
+                </div>
+            </div>
+            
+            <!-- Simple Footer -->
+            <div class="invoice-footer">
+                <p>Thank you for your business!</p>
+                <p class="terms">Payment due within 30 days</p>
+            </div>
+        </div>
+    `;
+};
