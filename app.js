@@ -71,8 +71,11 @@ function hideAllPages() {
 function initApp() {
     console.log('Initializing app...');
 
-     // Setup global print handler (ADD THIS LINE)
+     // Setup global print handler
     setupGlobalPrintHandler();
+    
+    // Setup global modal handlers (ADD THIS LINE)
+    setupGlobalModalHandlers();
     
     // Check if user is authenticated
     if (!auth.currentUser) {
