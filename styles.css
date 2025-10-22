@@ -1636,19 +1636,19 @@ html, body {
 /* Webkit scrollbar styling */
 .invoices-table-container::-webkit-scrollbar,
 .stock-table-container::-webkit-scrollbar {
-  height: 8px;
+  height: 6px;
 }
 
 .invoices-table-container::-webkit-scrollbar-track,
 .stock-table-container::-webkit-scrollbar-track {
   background: var(--bg-accent);
-  border-radius: 4px;
+  border-radius: 3px;
 }
 
 .invoices-table-container::-webkit-scrollbar-thumb,
 .stock-table-container::-webkit-scrollbar-thumb {
   background: var(--primary-yellow);
-  border-radius: 4px;
+  border-radius: 3px;
 }
 
 .invoices-table-container::-webkit-scrollbar-thumb:hover,
@@ -1695,67 +1695,7 @@ html, body {
   .stock-table td {
     white-space: nowrap; /* Prevent text wrapping in table cells */
     padding: 10px 8px; /* Slightly reduced padding on mobile */
-    font-size: 13px; /* Slightly smaller font for mobile */
   }
-  
-  /* Action buttons in tables - stack vertically on very small screens */
-  .invoice-actions-cell {
-    flex-direction: column;
-    gap: 5px;
-  }
-  
-  .invoice-actions-cell button {
-    min-width: 60px;
-    font-size: 11px;
-    padding: 4px 8px;
-  }
-}
-
-/* Extra small devices */
-@media (max-width: 480px) {
-  .invoices-table-container,
-  .stock-table-container {
-    margin-left: -10px;
-    margin-right: -10px;
-    border-radius: 0;
-  }
-  
-  .invoices-table th,
-  .invoices-table td,
-  .stock-table th,
-  .stock-table td {
-    padding: 8px 6px;
-    font-size: 12px;
-  }
-  
-  /* Hide less important columns on very small screens */
-  .invoices-table th:nth-child(3), /* Mobile column */
-  .invoices-table td:nth-child(3),
-  .stock-table th:nth-child(6), /* Min Stock column */
-  .stock-table td:nth-child(6) {
-    display: none;
-  }
-}
-
-/* Add visual indicator for scrollable tables on mobile */
-@media (max-width: 768px) {
-  .invoices-table-container::after,
-  .stock-table-container::after {
-    content: '← Scroll →';
-    display: block;
-    text-align: center;
-    padding: 8px;
-    font-size: 12px;
-    color: var(--text-muted);
-    background: linear-gradient(90deg, transparent, var(--primary-yellow), transparent);
-    background-size: 200% 100%;
-    animation: scrollHint 2s infinite;
-  }
-}
-
-@keyframes scrollHint {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
 }
 
 /* Print styles - disable horizontal scroll */
