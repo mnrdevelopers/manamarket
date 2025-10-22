@@ -100,14 +100,18 @@ function initApp() {
     hideLoadingScreen();
 }
 
-// Hide loading screen
+// Hide loading screen with smooth transition
 function hideLoadingScreen() {
-    setTimeout(() => {
-        const loadingScreen = document.getElementById('loading-screen');
-        if (loadingScreen) {
-            loadingScreen.classList.add('hidden');
-        }
-    }, 500);
+    const loadingScreen = document.getElementById('loading-screen');
+    if (loadingScreen) {
+        // Add hidden class for fade out effect
+        loadingScreen.classList.add('hidden');
+        
+        // Remove from DOM after animation completes
+        setTimeout(() => {
+            loadingScreen.style.display = 'none';
+        }, 500);
+    }
 }
 
 // Setup navigation between pages
