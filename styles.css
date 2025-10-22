@@ -1623,3 +1623,151 @@ html, body {
 .invoice-mobile, .invoice-date, .invoice-amount {
   color: var(--text-muted);
 }
+
+/* ===== HORIZONTAL SCROLL FOR TABLES ON MOBILE ===== */
+.invoices-table-container,
+.stock-table-container {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+  scrollbar-width: thin; /* Firefox */
+  scrollbar-color: var(--primary-yellow) var(--bg-accent); /* Firefox */
+}
+
+/* Webkit scrollbar styling */
+.invoices-table-container::-webkit-scrollbar,
+.stock-table-container::-webkit-scrollbar {
+  height: 8px;
+}
+
+.invoices-table-container::-webkit-scrollbar-track,
+.stock-table-container::-webkit-scrollbar-track {
+  background: var(--bg-accent);
+  border-radius: 4px;
+}
+
+.invoices-table-container::-webkit-scrollbar-thumb,
+.stock-table-container::-webkit-scrollbar-thumb {
+  background: var(--primary-yellow);
+  border-radius: 4px;
+}
+
+.invoices-table-container::-webkit-scrollbar-thumb:hover,
+.stock-table-container::-webkit-scrollbar-thumb:hover {
+  background: #FFE500;
+}
+
+/* Ensure tables don't break on mobile */
+.invoices-table,
+.stock-table {
+  min-width: 600px; /* Minimum width to prevent squeezing */
+  width: 100%;
+}
+
+/* Specific adjustments for stock table */
+.stock-table {
+  min-width: 700px; /* Stock table needs more width due to more columns */
+}
+
+/* Product rows in forms - horizontal scroll for mobile */
+.products-section {
+  overflow-x: auto;
+}
+
+#products-container,
+#edit-products-container {
+  min-width: 800px; /* Ensure product rows don't break */
+}
+
+/* Invoice preview table scroll */
+.invoice-preview-content {
+  overflow-x: auto;
+}
+
+.products-table {
+  min-width: 500px;
+}
+
+/* Responsive table improvements */
+@media (max-width: 768px) {
+  .invoices-table th,
+  .invoices-table td,
+  .stock-table th,
+  .stock-table td {
+    white-space: nowrap; /* Prevent text wrapping in table cells */
+    padding: 10px 8px; /* Slightly reduced padding on mobile */
+    font-size: 13px; /* Slightly smaller font for mobile */
+  }
+  
+  /* Action buttons in tables - stack vertically on very small screens */
+  .invoice-actions-cell {
+    flex-direction: column;
+    gap: 5px;
+  }
+  
+  .invoice-actions-cell button {
+    min-width: 60px;
+    font-size: 11px;
+    padding: 4px 8px;
+  }
+}
+
+/* Extra small devices */
+@media (max-width: 480px) {
+  .invoices-table-container,
+  .stock-table-container {
+    margin-left: -10px;
+    margin-right: -10px;
+    border-radius: 0;
+  }
+  
+  .invoices-table th,
+  .invoices-table td,
+  .stock-table th,
+  .stock-table td {
+    padding: 8px 6px;
+    font-size: 12px;
+  }
+  
+  /* Hide less important columns on very small screens */
+  .invoices-table th:nth-child(3), /* Mobile column */
+  .invoices-table td:nth-child(3),
+  .stock-table th:nth-child(6), /* Min Stock column */
+  .stock-table td:nth-child(6) {
+    display: none;
+  }
+}
+
+/* Add visual indicator for scrollable tables on mobile */
+@media (max-width: 768px) {
+  .invoices-table-container::after,
+  .stock-table-container::after {
+    content: '← Scroll →';
+    display: block;
+    text-align: center;
+    padding: 8px;
+    font-size: 12px;
+    color: var(--text-muted);
+    background: linear-gradient(90deg, transparent, var(--primary-yellow), transparent);
+    background-size: 200% 100%;
+    animation: scrollHint 2s infinite;
+  }
+}
+
+@keyframes scrollHint {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* Print styles - disable horizontal scroll */
+@media print {
+  .invoices-table-container,
+  .stock-table-container {
+    overflow-x: visible;
+  }
+  
+  .invoices-table,
+  .stock-table {
+    min-width: auto;
+    width: 100%;
+  }
+}
