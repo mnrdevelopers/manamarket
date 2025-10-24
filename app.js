@@ -734,3 +734,78 @@ window.generateInvoicePreview = function(invoice, invoiceId, isPreview = false) 
         </div>
     `;
 };
+
+// Loading state utility functions
+function showLoading(element) {
+    if (typeof element === 'string') {
+        element = document.querySelector(element);
+    }
+    if (element) {
+        element.classList.add('btn-loading');
+    }
+}
+
+function hideLoading(element) {
+    if (typeof element === 'string') {
+        element = document.querySelector(element);
+    }
+    if (element) {
+        element.classList.remove('btn-loading');
+    }
+}
+
+function showSectionLoading(section) {
+    if (typeof section === 'string') {
+        section = document.querySelector(section);
+    }
+    if (section) {
+        section.classList.add('loading-section');
+    }
+}
+
+function hideSectionLoading(section) {
+    if (typeof section === 'string') {
+        section = document.querySelector(section);
+    }
+    if (section) {
+        section.classList.remove('loading-section');
+    }
+}
+
+function showTableLoading(table) {
+    if (typeof table === 'string') {
+        table = document.querySelector(table);
+    }
+    if (table) {
+        table.classList.add('table-loading');
+    }
+}
+
+function hideTableLoading(table) {
+    if (typeof table === 'string') {
+        table = document.querySelector(table);
+    }
+    if (table) {
+        table.classList.remove('table-loading');
+    }
+}
+
+// Auto-attach loading to form submissions
+document.addEventListener('DOMContentLoaded', function() {
+    // Form submissions
+    document.querySelectorAll('form').forEach(form => {
+        form.addEventListener('submit', function() {
+            const submitBtn = this.querySelector('button[type="submit"]');
+            if (submitBtn) {
+                showLoading(submitBtn);
+            }
+        });
+    });
+    
+    // Button clicks with data-loading attribute
+    document.querySelectorAll('[data-loading]').forEach(button => {
+        button.addEventListener('click', function() {
+            showLoading(this);
+        });
+    });
+});
