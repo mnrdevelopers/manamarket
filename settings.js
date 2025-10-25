@@ -39,45 +39,67 @@ async function loadSettings() {
     if (!user) return;
     
     const settingsForm = document.getElementById('settings-form');
-    if (!settingsForm) return;
+    // Allow this function to run even if settingsForm is null (e.g., when called from app.js on load)
+    // if (!settingsForm) return; 
 
-    // Show loading indicator
-    settingsForm.classList.add('form-loading');
+    const isLoadingPage = settingsForm && settingsForm.classList.contains('form-loading');
+    if (settingsForm) settingsForm.classList.add('form-loading');
     
     try {
         const docRef = getDb().collection('settings').doc(SETTINGS_DOC_ID);
         const doc = await docRef.get();
 
+        // 1. Define hardcoded defaults
+        const defaults = {
+            businessName: 'BILLA TRADERS',
+            address: 'DICHPALLY RS, HYD-NZB ROAD, NIZAMABAD TELANGANA 503175',
+            terms: '1. Goods once sold cannot be taken back. 2. Payment due within 30 days. 3. Disputes subject to Nizamabad jurisdiction.',
+            gstin: '',
+            pan: ''
+        };
+
         if (doc.exists) {
             const data = doc.data();
             window.currentSettings = data;
             
-            // Populate the form fields
-            document.getElementById('setting-business-name').value = data.businessName || 'BILLA TRADERS';
-            document.getElementById('setting-gstin').value = data.gstin || '';
-            document.getElementById('setting-pan').value = data.pan || '';
-            document.getElementById('setting-bank-details').value = data.bankDetails || '';
-            document.getElementById('setting-address').value = data.address || 'DICHPALLY RS, HYD-NZB ROAD, NIZAMABAD TELANGANA 503175';
-            document.getElementById('setting-terms').value = data.terms || '1. Goods once sold cannot be taken back. 2. Payment due within 30 days. 3. Disputes subject to Nizamabad jurisdiction.';
+            // Populate the form fields ONLY if the form exists (i.e., we are on the settings page)
+            if (settingsForm) {
+                document.getElementById('setting-business-name').value = data.businessName || defaults.businessName;
+                document.getElementById('setting-gstin').value = data.gstin || defaults.gstin;
+                document.getElementById('setting-pan').value = data.pan || defaults.pan;
+                document.getElementById('setting-bank-details').value = data.bankDetails || '';
+                document.getElementById('setting-address').value = data.address || defaults.address;
+                document.getElementById('setting-terms').value = data.terms || defaults.terms;
+            }
 
             console.log('Settings loaded successfully.');
         } else {
             console.log('No custom settings found, using defaults.');
-            // Initialize with hardcoded defaults if document doesn't exist
-            document.getElementById('setting-business-name').value = 'BILLA TRADERS';
-            document.getElementById('setting-address').value = 'DICHPALLY RS, HYD-NZB ROAD, NIZAMABAD TELANGANA 503175';
-            document.getElementById('setting-terms').value = '1. Goods once sold cannot be taken back. 2. Payment due within 30 days. 3. Disputes subject to Nizamabad jurisdiction.';
-            window.currentSettings = {
-                businessName: 'BILLA TRADERS',
-                address: 'DICHPALLY RS, HYD-NZB ROAD, NIZAMABAD TELANGANA 503175',
-                terms: '1. Goods once sold cannot be taken back. 2. Payment due within 30 days. 3. Disputes subject to Nizamabad jurisdiction.'
-            };
+            // Set global settings to defaults
+            window.currentSettings = defaults;
+            
+            // Populate form fields with defaults if form exists
+            if (settingsForm) {
+                document.getElementById('setting-business-name').value = defaults.businessName;
+                document.getElementById('setting-address').value = defaults.address;
+                document.getElementById('setting-terms').value = defaults.terms;
+            }
         }
+
+        // IMPORTANT: Update the header across all pages after loading settings
+        if (typeof refreshAppHeader === 'function') {
+            refreshAppHeader();
+        }
+
     } catch (error) {
         console.error('Error loading settings:', error);
-        showMessage('Error loading settings: ' + error.message, 'error');
+        if (error.code === 'permission-denied') {
+            showMessage('Permissions Error: Check Firebase Security Rules for the "settings" collection.', 'error');
+        } else {
+            showMessage('Error loading settings: ' + error.message, 'error');
+        }
     } finally {
-        settingsForm.classList.remove('form-loading');
+        if (settingsForm) settingsForm.classList.remove('form-loading');
     }
 }
 
@@ -121,13 +143,23 @@ function saveSettings(e) {
     getDb().collection('settings').doc(SETTINGS_DOC_ID).set(settingsData, { merge: true })
         .then(() => {
             showMessage('Settings saved successfully!', 'success');
-            // Update the global cache immediately
+            // 1. Update the global cache immediately
             window.currentSettings = settingsData;
             console.log('Global settings cache updated.');
+
+            // 2. Refresh the application header to show new name/address
+            if (typeof refreshAppHeader === 'function') {
+                refreshAppHeader();
+            }
+
         })
         .catch(error => {
-            showMessage('Error saving settings: ' + error.message, 'error');
             console.error('Error saving settings:', error);
+            if (error.code === 'permission-denied') {
+                 showMessage('Permissions Error: Cannot save. Check Firebase Security Rules for "settings" and "customers" collections.', 'error');
+            } else {
+                showMessage('Error saving settings: ' + error.message, 'error');
+            }
         })
         .finally(() => {
             saveBtn.textContent = originalText;
