@@ -4,6 +4,13 @@
 function showPage(pageId) {
     console.log('showPage called for:', pageId);
     
+    // 1. Update the URL hash without reloading the page
+    // Converts 'invoices-page' to 'invoices'
+    const hashId = pageId.replace('-page', '');
+    if (window.location.hash.substring(1) !== hashId) {
+        window.history.pushState(null, null, `#${hashId}`);
+    }
+
     // Hide all pages
     const pages = document.querySelectorAll('.page');
     pages.forEach(page => {
@@ -67,6 +74,21 @@ function hideAllPages() {
     });
 }
 
+// Function to determine the initial page on load based on URL hash
+function getInitialPage() {
+    // Get hash and remove leading '#'
+    const hash = window.location.hash.substring(1); 
+    const validPages = ['dashboard', 'invoice', 'invoices', 'stock'];
+    
+    if (hash && validPages.includes(hash)) {
+        return `${hash}-page`;
+    }
+    
+    // Default to dashboard
+    return 'dashboard-page';
+}
+
+
 // Initialize the application
 function initApp() {
     console.log('Initializing app...');
@@ -86,15 +108,39 @@ function initApp() {
     // Setup navigation
     setupNavigation();
     
-    // Show dashboard by default
-    console.log('User logged in, showing dashboard');
-    showPage('dashboard-page');
+    // Show the initial page based on URL hash or default to dashboard
+    const initialPage = getInitialPage();
+    console.log('User logged in, showing initial page:', initialPage);
     
-    // Load dashboard data after ensuring page is visible
-    setTimeout(() => {
-        console.log('Loading dashboard data after timeout');
-        loadDashboardData();
-    }, 300);
+    // Note: showPage is called, which updates the hash if it was missing (e.g. initial load without hash)
+    showPage(initialPage);
+    
+    // Load dashboard data if starting on dashboard
+    if (initialPage === 'dashboard-page') {
+        setTimeout(() => {
+            console.log('Loading dashboard data after timeout');
+            loadDashboardData();
+        }, 300);
+    } else {
+        // Ensure other pages run their initialization logic immediately after being shown
+        initActivePage();
+    }
+
+
+    // Handle back/forward button for hash changes
+    window.addEventListener('popstate', function() {
+        const pageId = getInitialPage();
+        // Use direct DOM manipulation for smooth transition without triggering history push
+        const targetPage = document.getElementById(pageId);
+        if (targetPage) {
+            hideAllPages();
+            targetPage.style.display = 'block';
+            targetPage.classList.add('active');
+            setActiveNavButton(pageId);
+            initActivePage();
+        }
+    });
+
     
     // Hide loading screen
     hideLoadingScreen();
