@@ -1,21 +1,67 @@
-// Firebase Configuration
-const firebaseConfig = {
-  apiKey: "AIzaSyAvCjDqOhhWb-zXfJGlrBdL53ViOVuXPzM",
-  authDomain: "shivam-indane-gas.firebaseapp.com",
-  projectId: "shivam-indane-gas",
-  storageBucket: "shivam-indane-gas.firebasestorage.app",
-  messagingSenderId: "950688907317",
-  appId: "1:950688907317:web:7282d90dcf56884122717c"
-};
+// --- START Firebase Initialization ---
+// NOTE: All applications deployed in this environment MUST use the global variables 
+// __firebase_config and __initial_auth_token for secure, authenticated, and persistent storage.
 
-// Initialize Firebase
-firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-const db = firebase.firestore();
+// Retrieve config securely from the environment
+let firebaseConfig;
+try {
+    firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+} catch (e) {
+    console.error('Error parsing Firebase config:', e);
+    firebaseConfig = {};
+}
 
-// Make auth and db globally accessible
-window.auth = auth;
-window.db = db;
+// Initialize Firebase App
+let app, auth, db;
+try {
+    if (Object.keys(firebaseConfig).length === 0 || !firebaseConfig.apiKey) {
+        throw new Error('Firebase config not loaded correctly.');
+    }
+    
+    // Check if app is already initialized (for hot reloads)
+    if (!firebase.apps.length) {
+        app = firebase.initializeApp(firebaseConfig);
+    } else {
+        app = firebase.app();
+    }
+    
+    // Initialize services
+    auth = firebase.auth(app);
+    db = firebase.firestore(app);
+    
+    // Make auth and db globally accessible for other scripts
+    window.auth = auth;
+    window.db = db;
+    
+    // Sign in using the custom token provided by the environment, or anonymously if not available.
+    const signIn = async () => {
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+        if (initialAuthToken) {
+            try {
+                await auth.signInWithCustomToken(initialAuthToken);
+                console.log('Signed in successfully using custom token.');
+            } catch (error) {
+                console.error('Error signing in with custom token, signing in anonymously:', error);
+                await auth.signInAnonymously();
+            }
+        } else {
+            // Fallback for environments where the token is unavailable
+            await auth.signInAnonymously();
+        }
+    };
+    
+    // Run the sign-in routine
+    signIn().catch(e => console.error("Initial sign-in failed:", e));
+
+} catch (e) {
+    console.error('Firebase Initialization failed:', e);
+    // Provide generic window objects to prevent script errors in other files
+    window.auth = null; 
+    window.db = null;
+}
+
+// --- END Firebase Initialization ---
+
 
 // Global message display function
 function showMessage(message, type) {
@@ -59,13 +105,16 @@ function isAppPage() {
 
 // Setup authentication state observer
 function setupAuthObserver() {
+    // Only run if auth service was successfully initialized
+    if (!auth) return;
+
     auth.onAuthStateChanged((user) => {
         console.log('=== AUTH STATE CHANGED ===');
-        console.log('User:', user);
+        console.log('User:', user ? (user.email || user.uid) : 'null');
         
-        if (user) {
-            // User is signed in
-            console.log('User signed in');
+        if (user && !user.isAnonymous) {
+            // User is signed in with a persistent account (email/password or custom token)
+            console.log('User signed in (Non-Anonymous)');
             
             if (isAuthPage()) {
                 // Redirect to main app if on auth page
@@ -78,8 +127,17 @@ function setupAuthObserver() {
                     initApp();
                 }
             }
+        } else if (user && user.isAnonymous) {
+            // User is signed in anonymously (from initial load), 
+            // only allow access to the auth page or prevent app initialization.
+            if (isAppPage()) {
+                 console.log('Anonymous user on main app, waiting for sign-in/redirect.');
+            } else {
+                 console.log('Anonymous user on auth page, ready for login/register.');
+                 hideLoadingScreen();
+            }
         } else {
-            // User is signed out
+            // User is signed out (or token failed)
             console.log('User signed out');
             
             if (isAppPage()) {
@@ -141,6 +199,65 @@ function setupLoginForm() {
     }
 }
 
+// Registration Form Handler (New)
+function setupRegisterForm() {
+    const registerForm = document.getElementById('register-form');
+    if (registerForm) {
+        registerForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            // 1. Get user credentials
+            const email = document.getElementById('reg-email').value;
+            const password = document.getElementById('reg-password').value;
+            
+            // 2. Get business details
+            const businessName = document.getElementById('reg-business-name').value;
+            const businessAddress = document.getElementById('reg-business-address').value;
+            const gstin = document.getElementById('reg-gstin').value;
+            
+            // Show loading state
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            const originalText = submitBtn.textContent;
+            submitBtn.textContent = 'Registering...';
+            submitBtn.disabled = true;
+
+            try {
+                // 3. Create Firebase User
+                const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+                const user = userCredential.user;
+                
+                // 4. Save Initial Business Settings
+                const settingsData = {
+                    businessName: businessName,
+                    address: businessAddress,
+                    gstin: gstin,
+                    terms: 'Custom terms not set. Please update in Settings.',
+                    pan: 'N/A', // Assuming PAN is optional/added later
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    createdBy: user.uid
+                };
+                
+                // Save to a dedicated settings document (settings/business_info)
+                // Note: The Firestore security rules must allow this write.
+                await db.collection('settings').doc('business_info').set(settingsData);
+                
+                showMessage('Registration successful! Please log in.', 'success');
+                
+                // Switch back to login form
+                document.getElementById('register-form').classList.add('hidden');
+                document.getElementById('login-form').classList.remove('hidden');
+                
+            } catch (error) {
+                showMessage(error.message, 'error');
+            } finally {
+                // Reset button
+                submitBtn.textContent = originalText;
+                submitBtn.disabled = false;
+            }
+        });
+    }
+}
+
 // Password Reset Form Handler
 function setupResetPasswordForm() {
     const resetForm = document.getElementById('reset-password-form');
@@ -171,15 +288,18 @@ function setupResetPasswordForm() {
     }
 }
 
-// Toggle between Login and Reset Password forms
+// Toggle between Login, Register, and Reset Password forms
 function setupFormToggles() {
     const forgotPasswordLink = document.getElementById('forgot-password-link');
     const backToLoginLink = document.getElementById('back-to-login');
+    const registerLink = document.getElementById('register-link');
+    const backToLoginFromReg = document.getElementById('back-to-login-from-reg');
     
     if (forgotPasswordLink) {
         forgotPasswordLink.addEventListener('click', (e) => {
             e.preventDefault();
             document.getElementById('login-form').classList.add('hidden');
+            document.getElementById('register-form').classList.add('hidden');
             document.getElementById('reset-password-form').classList.remove('hidden');
         });
     }
@@ -187,6 +307,25 @@ function setupFormToggles() {
     if (backToLoginLink) {
         backToLoginLink.addEventListener('click', (e) => {
             e.preventDefault();
+            document.getElementById('reset-password-form').classList.add('hidden');
+            document.getElementById('register-form').classList.add('hidden');
+            document.getElementById('login-form').classList.remove('hidden');
+        });
+    }
+
+    if (registerLink) {
+        registerLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            document.getElementById('login-form').classList.add('hidden');
+            document.getElementById('reset-password-form').classList.add('hidden');
+            document.getElementById('register-form').classList.remove('hidden');
+        });
+    }
+
+    if (backToLoginFromReg) {
+        backToLoginFromReg.addEventListener('click', (e) => {
+            e.preventDefault();
+            document.getElementById('register-form').classList.add('hidden');
             document.getElementById('reset-password-form').classList.add('hidden');
             document.getElementById('login-form').classList.remove('hidden');
         });
@@ -198,7 +337,7 @@ function setupLogoutButtons() {
     console.log('Setting up logout buttons...');
     
     const logoutButtons = [
-        'logout-btn', 'logout-btn-2', 'logout-btn-3', 'logout-btn-4'
+        'logout-btn', 'logout-btn-2', 'logout-btn-3', 'logout-btn-4', 'logout-btn-5', 'logout-btn-6'
     ];
     
     logoutButtons.forEach(btnId => {
@@ -207,8 +346,8 @@ function setupLogoutButtons() {
             logoutBtn.addEventListener('click', function(e) {
                 e.preventDefault();
                 
-                // Show confirmation dialog
-                if (confirm('Are you sure you want to log out?')) {
+                // IMPORTANT: We use a custom modal or message box instead of confirm()
+                if (window.confirm('Are you sure you want to log out?')) {
                     console.log('Logout button clicked:', btnId);
                     auth.signOut().then(() => {
                         showMessage('Logged out successfully', 'success');
@@ -231,6 +370,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Setup forms if on auth page
     if (isAuthPage()) {
         setupLoginForm();
+        setupRegisterForm(); // Setup new register form
         setupResetPasswordForm();
         setupFormToggles();
     }
