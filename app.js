@@ -57,6 +57,12 @@ function setActiveNavButton(pageId) {
         case 'stock-page':
             activeButtonId = 'stock-management-nav-4';
             break;
+        case 'customers-page':
+            activeButtonId = 'customers-nav-5';
+            break;
+        case 'settings-page':
+            activeButtonId = 'settings-nav-6';
+            break;
     }
     
     // Also set active state for buttons with the same function on other pages
@@ -78,7 +84,7 @@ function hideAllPages() {
 function getInitialPage() {
     // Get hash and remove leading '#'
     const hash = window.location.hash.substring(1); 
-    const validPages = ['dashboard', 'invoice', 'invoices', 'stock'];
+    const validPages = ['dashboard', 'invoice', 'invoices', 'stock', 'customers', 'settings'];
     
     if (hash && validPages.includes(hash)) {
         return `${hash}-page`;
@@ -115,7 +121,7 @@ function initApp() {
     // Note: showPage is called, which updates the hash if it was missing (e.g. initial load without hash)
     showPage(initialPage);
     
-    // Load dashboard data if starting on dashboard
+    // Load dashboard data if starting on dashboard, otherwise just run page init
     if (initialPage === 'dashboard-page') {
         setTimeout(() => {
             console.log('Loading dashboard data after timeout');
@@ -169,8 +175,10 @@ function setupNavigation() {
     const dashboardNav2 = document.getElementById('dashboard-nav-2');
     const dashboardNav3 = document.getElementById('dashboard-nav-3');
     const dashboardNav4 = document.getElementById('dashboard-nav-4');
+    const dashboardNav5 = document.getElementById('dashboard-nav-5');
+    const dashboardNav6 = document.getElementById('dashboard-nav-6');
     
-    [dashboardNav1, dashboardNav2, dashboardNav3, dashboardNav4].forEach((nav, index) => {
+    [dashboardNav1, dashboardNav2, dashboardNav3, dashboardNav4, dashboardNav5, dashboardNav6].forEach((nav, index) => {
         if (nav) {
             nav.addEventListener('click', function(e) {
                 e.preventDefault();
@@ -186,8 +194,10 @@ function setupNavigation() {
     const createInvoiceNav2 = document.getElementById('create-invoice-nav-2');
     const createInvoiceNav3 = document.getElementById('create-invoice-nav-3');
     const createInvoiceNav4 = document.getElementById('create-invoice-nav-4');
+    const createInvoiceNav5 = document.getElementById('create-invoice-nav-5');
+    const createInvoiceNav6 = document.getElementById('create-invoice-nav-6');
 
-    [createInvoiceNav1, createInvoiceNav2, createInvoiceNav3, createInvoiceNav4].forEach((nav, index) => {
+    [createInvoiceNav1, createInvoiceNav2, createInvoiceNav3, createInvoiceNav4, createInvoiceNav5, createInvoiceNav6].forEach((nav, index) => {
         if (nav) {
             nav.addEventListener('click', function(e) {
                 e.preventDefault();
@@ -206,8 +216,10 @@ function setupNavigation() {
     const invoicesNav2 = document.getElementById('invoices-list-nav-2');
     const invoicesNav3 = document.getElementById('invoices-list-nav-3');
     const invoicesNav4 = document.getElementById('invoices-list-nav-4');
+    const invoicesNav5 = document.getElementById('invoices-list-nav-5');
+    const invoicesNav6 = document.getElementById('invoices-list-nav-6');
     
-    [invoicesNav1, invoicesNav2, invoicesNav3, invoicesNav4].forEach((nav, index) => {
+    [invoicesNav1, invoicesNav2, invoicesNav3, invoicesNav4, invoicesNav5, invoicesNav6].forEach((nav, index) => {
         if (nav) {
             nav.addEventListener('click', function(e) {
                 e.preventDefault();
@@ -226,8 +238,10 @@ const stockNav1 = document.getElementById('stock-management-nav');
 const stockNav2 = document.getElementById('stock-management-nav-2');
 const stockNav3 = document.getElementById('stock-management-nav-3');
 const stockNav4 = document.getElementById('stock-management-nav-4');
+const stockNav5 = document.getElementById('stock-management-nav-5');
+const stockNav6 = document.getElementById('stock-management-nav-6');
 
-[stockNav1, stockNav2, stockNav3, stockNav4].forEach((nav, index) => {
+[stockNav1, stockNav2, stockNav3, stockNav4, stockNav5, stockNav6].forEach((nav, index) => {
     if (nav) {
         nav.addEventListener('click', function(e) {
             e.preventDefault();
@@ -245,6 +259,48 @@ const stockNav4 = document.getElementById('stock-management-nav-4');
         });
     }
 });
+
+    // Customers navigation (New)
+    const customersNavs = [
+        document.getElementById('customers-nav'), 
+        document.getElementById('customers-nav-2'), 
+        document.getElementById('customers-nav-3'), 
+        document.getElementById('customers-nav-4'),
+        document.getElementById('customers-nav-5'),
+        document.getElementById('customers-nav-6')
+    ];
+    customersNavs.forEach(nav => {
+        if (nav) {
+            nav.addEventListener('click', function(e) {
+                e.preventDefault();
+                showPage('customers-page');
+                if (typeof loadAllCustomers === 'function') {
+                    setTimeout(loadAllCustomers, 100);
+                }
+            });
+        }
+    });
+
+    // Settings navigation (New)
+    const settingsNavs = [
+        document.getElementById('settings-nav'), 
+        document.getElementById('settings-nav-2'), 
+        document.getElementById('settings-nav-3'), 
+        document.getElementById('settings-nav-4'),
+        document.getElementById('settings-nav-5'),
+        document.getElementById('settings-nav-6')
+    ];
+    settingsNavs.forEach(nav => {
+        if (nav) {
+            nav.addEventListener('click', function(e) {
+                e.preventDefault();
+                showPage('settings-page');
+                if (typeof loadSettings === 'function') {
+                    setTimeout(loadSettings, 100);
+                }
+            });
+        }
+    });
     
     // Quick action buttons in dashboard
     const quickCreateInvoice = document.getElementById('quick-create-invoice');
@@ -540,6 +596,16 @@ function initActivePage() {
                 setTimeout(initInvoicesPage, 100);
             }
             break;
+        case 'customers-page': // Added New Page Init
+            if (typeof initCustomersPage === 'function') {
+                setTimeout(initCustomersPage, 100);
+            }
+            break;
+        case 'settings-page': // Added New Page Init
+            if (typeof initSettingsPage === 'function') {
+                setTimeout(initSettingsPage, 100);
+            }
+            break;
     }
 }
 
@@ -631,6 +697,17 @@ function setupGlobalModalHandlers() {
             e.preventDefault();
             console.log('Closing product modal');
             document.getElementById('product-modal').classList.add('hidden');
+        }
+        
+        // Close customer modal (New)
+        if (e.target.id === 'close-customer-modal' || 
+            e.target.id === 'cancel-customer-btn' ||
+            e.target.closest('#close-customer-modal') ||
+            e.target.closest('#cancel-customer-btn')) {
+            
+            e.preventDefault();
+            console.log('Closing customer modal');
+            document.getElementById('customer-modal').classList.add('hidden');
         }
         
         // Close modal when clicking outside content
@@ -811,6 +888,78 @@ window.generateInvoicePreview = function(invoice, invoiceId, isPreview = false) 
         </div>
     `;
 };
+
+// Simple function to convert number to words for invoice aesthetic (Copied from invoice.js)
+function convertNumberToWords(amount) {
+    if (typeof amount === 'string') {
+        amount = parseFloat(amount);
+    }
+    if (isNaN(amount) || amount === 0) {
+        return "Zero";
+    }
+    
+    const units = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine'];
+    const teens = ['Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'];
+    const tens = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
+
+    function convertGroup(n) {
+        let output = '';
+        if (n >= 100) {
+            output += units[Math.floor(n / 100)] + ' Hundred ';
+            n %= 100;
+        }
+        if (n >= 10 && n <= 19) {
+            output += teens[n - 10];
+        } else if (n >= 20) {
+            output += tens[Math.floor(n / 10)] + (n % 10 > 0 ? ' ' + units[n % 10] : '');
+        } else if (n > 0) {
+            output += units[n % 10];
+        }
+        return output.trim();
+    }
+
+    let wholePart = Math.floor(amount);
+    let decimalPart = Math.round((amount - wholePart) * 100);
+    let result = '';
+
+    let crores = Math.floor(wholePart / 10000000);
+    wholePart %= 10000000;
+
+    let lakhs = Math.floor(wholePart / 100000);
+    wholePart %= 100000;
+
+    let thousands = Math.floor(wholePart / 1000);
+    wholePart %= 1000;
+
+    let remainder = wholePart;
+    
+    if (crores > 0) {
+        result += convertGroup(crores) + ' Crore ';
+    }
+    if (lakhs > 0) {
+        result += convertGroup(lakhs) + ' Lakh ';
+    }
+    if (thousands > 0) {
+        result += convertGroup(thousands) + ' Thousand ';
+    }
+    if (remainder > 0) {
+        result += convertGroup(remainder);
+    }
+    
+    if (result.trim() === '') {
+        result = 'Zero';
+    }
+    
+    if (decimalPart > 0) {
+        result += ' and ' + convertGroup(decimalPart) + ' Paisa';
+    } else {
+        // Ensure "only" is added if no cents
+        result += ' ';
+    }
+
+    return result.trim().replace(/\s+/g, ' '); // Clean up multiple spaces
+}
+
 
 // Loading state utility functions
 function showLoading(element) {
