@@ -631,13 +631,18 @@ window.generateInvoicePreview = function(invoice, invoiceId, isPreview = false) 
     let invoiceDate;
     if (invoice.createdAt) {
         if (typeof invoice.createdAt.toDate === 'function') {
-            invoiceDate = invoice.createdAt.toDate().toLocaleDateString();
+            invoiceDate = invoice.createdAt.toDate().toLocaleDateString() || 'N/A';
         } else {
-            invoiceDate = new Date(invoice.createdAt).toLocaleDateString();
+            invoiceDate = new Date(invoice.createdAt).toLocaleDateString() || 'N/A';
         }
     } else {
         invoiceDate = new Date().toLocaleDateString();
     }
+    
+    // Handle Address display
+    const customerAddressHtml = invoice.customerAddress ? 
+        invoice.customerAddress.replace(/\n/g, '<br>') : 
+        'N/A';
     
     // Use invoice number if available, otherwise use ID
     const displayInvoiceNumber = invoice.invoiceNumber || invoiceId;
@@ -696,7 +701,7 @@ window.generateInvoicePreview = function(invoice, invoiceId, isPreview = false) 
                     <h4>Bill To:</h4>
                     <p><strong>${invoice.customerName}</strong></p>
                     <p>Mobile: ${invoice.customerMobile}</p>
-                    <p>Address: N/A</p>
+                    <p>Address: ${customerAddressHtml}</p>
                 </div>
                 <div class="invoice-meta-info">
                     <div class="meta-row"><strong>Invoice No:</strong> <span>${displayInvoiceNumber}</span></div>
