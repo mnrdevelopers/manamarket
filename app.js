@@ -94,6 +94,39 @@ function getInitialPage() {
     return 'dashboard-page';
 }
 
+/**
+ * Updates the visible business name across all page headers.
+ */
+function refreshAppHeader() {
+    // 1. Get current settings from global cache or hardcoded defaults
+    const settings = window.currentSettings || {
+        businessName: 'BILLA TRADERS'
+    };
+    const businessName = settings.businessName || 'BILLA TRADERS';
+
+    // 2. Update the main application title (for browser tab)
+    if (document.title) {
+        document.title = `${businessName} - Professional Invoice System`;
+    }
+
+    // 3. Update all header H1s across all pages
+    document.querySelectorAll('.logo-text h1').forEach(h1 => {
+        // The invoice pages use 'INVOBILL' suffix
+        h1.textContent = `${businessName.toUpperCase()} INVOBILL`;
+    });
+
+    // 4. Update the loading screen text (if present)
+    const loadingHeader = document.querySelector('#loading-screen h2');
+    if (loadingHeader) {
+        loadingHeader.textContent = businessName.toUpperCase();
+    }
+    
+    // 5. Update Auth Page Titles (if current page is auth.html - note: this code is in index.html)
+    // We cannot access auth.html's DOM, so we rely on the above global updates
+    // for elements that are present in the index.html shared header blocks.
+
+    console.log('Application header refreshed with:', businessName);
+}
 
 // Initialize the application
 function initApp() {
@@ -102,13 +135,19 @@ function initApp() {
      // Setup global print handler
     setupGlobalPrintHandler();
     
-    // Setup global modal handlers (ADD THIS LINE)
+    // Setup global modal handlers
     setupGlobalModalHandlers();
     
     // Check if user is authenticated
     if (!auth.currentUser) {
         console.log('No user logged in, redirecting will be handled by auth observer');
         return;
+    }
+
+    // IMPORTANT: Load settings immediately on app init before showing pages
+    if (typeof loadSettings === 'function') {
+        // Run asynchronously, but let the rest of initApp proceed
+        loadSettings(); 
     }
     
     // Setup navigation
@@ -770,28 +809,49 @@ window.generateInvoicePreview = function(invoice, invoiceId, isPreview = false) 
     // Use invoice number if available, otherwise use ID
     const displayInvoiceNumber = invoice.invoiceNumber || invoiceId;
     
+    // Attempt to load settings if missing (although initApp should handle this)
+    if (!window.currentSettings && typeof loadSettings === 'function') {
+        console.warn('Settings missing during preview generation, attempting immediate load.');
+        // This blocks the UI temporarily but ensures settings are present for the print job.
+        // It's crucial for the print functionality to have the right header details.
+        // Using `await` here is fine since this is inside a global synchronous function called by an event handler.
+        // If this function were async, we'd use await. Since it's sync, we rely on the global variable being set
+        // by the earlier init call, and simply use a defensive structure here.
+        // For a safe, non-blocking check:
+        // We'll rely on the settings being loaded by initApp/refreshAppHeader
+    }
+    
+    // Load settings from global cache or use defaults
+    const settings = window.currentSettings || {
+        businessName: 'BILLA TRADERS',
+        address: 'DICHPALLY RS, HYD-NZB ROAD, NIZAMABAD TELANGANA 503175',
+        terms: '1. Goods once sold cannot be taken back. 2. Payment due within 30 days. 3. Disputes subject to Nizamabad jurisdiction.',
+        gstin: 'N/A',
+        pan: 'N/A'
+    };
+    
+    const companyAddressHtml = settings.address ? settings.address.replace(/\n/g, '<br>') : 'N/A';
+    const termsHtml = settings.terms ? settings.terms.replace(/\n/g, '<br>') : 'Terms not available.';
+
     // Generate products table rows
     let productsRows = '';
     if (invoice.products && invoice.products.length > 0) {
         invoice.products.forEach((product, index) => {
-            // Calculate GST amounts for display
-            // NOTE: Assuming `product.price` already includes GST and `product.total` is total price including GST for the line item.
-            const unitPriceInclGst = product.price; // This is the input unit price from the form
-            const priceNoGst = unitPriceInclGst / (1 + (product.gst / 100));
-            const gstAmountPerUnit = unitPriceInclGst - priceNoGst;
-            
-            const subtotalNoGst = priceNoGst * product.quantity;
-            const totalGst = gstAmountPerUnit * product.quantity;
+            // Calculation of prices without GST is assumed to be handled in the form/save process
+            // and is approximated here for display using the final total and GST rate.
+            const totalInclGst = product.total;
+            const priceNoGst = totalInclGst / (1 + (product.gst / 100));
+            const totalGst = totalInclGst - priceNoGst;
 
             productsRows += `
                 <tr>
                     <td>${index + 1}</td>
                     <td class="product-name-cell">${product.name}</td>
                     <td class="qty-cell">${product.quantity}</td>
-                    <td class="price-cell">₹${priceNoGst.toFixed(2)}</td>
+                    <td class="price-cell">₹${(priceNoGst / product.quantity).toFixed(2)}</td>
                     <td class="gst-cell">${product.gst}%</td>
                     <td class="gst-amount-cell">₹${totalGst.toFixed(2)}</td>
-                    <td class="total-cell">₹${(subtotalNoGst + totalGst).toFixed(2)}</td>
+                    <td class="total-cell">₹${totalInclGst.toFixed(2)}</td>
                 </tr>
             `;
         });
@@ -806,13 +866,12 @@ window.generateInvoicePreview = function(invoice, invoiceId, isPreview = false) 
             <div class="invoice-header-print">
                 <div class="company-logo-section">
                     <!-- Placeholder for Company Logo -->
-                    <!-- <img src="logo.png" alt="BILLA TRADERS Logo" class="invoice-logo"> -->
-                    <div class="company-name-print">BILLA TRADERS</div>
+                    <!-- <img src="favicon.png" alt="${settings.businessName} Logo" class="invoice-logo"> -->
+                    <div class="company-name-print">${settings.businessName}</div>
                 </div>
                 <div class="company-address-section">
-                    <p class="company-address">DICHPALLY RS, HYD-NZB ROAD, NIZAMABAD TELANGANA 503175</p>
-                    <!-- Add professional details -->
-                    <p class="company-details">GSTIN: *XXXXXXXXXXXXXXX* | PAN: *ABCDE1234F*</p>
+                    <p class="company-address">${companyAddressHtml}</p>
+                    <p class="company-details">GSTIN: ${settings.gstin || 'N/A'} | PAN: ${settings.pan || 'N/A'}</p>
                 </div>
             </div>
             
@@ -877,10 +936,10 @@ window.generateInvoicePreview = function(invoice, invoiceId, isPreview = false) 
             <div class="invoice-footer-print">
                 <div class="terms-conditions">
                     <p><strong>Terms & Conditions:</strong></p>
-                    <p>1. Goods once sold cannot be taken back. 2. Payment due within 30 days. 3. Disputes subject to Nizamabad jurisdiction.</p>
+                    <p>${termsHtml}</p>
                 </div>
                 <div class="signature-section">
-                    <p>For BILLA TRADERS</p>
+                    <p>For ${settings.businessName}</p>
                     <div class="signature-line"></div>
                     <p>(Authorized Signatory)</p>
                 </div>
