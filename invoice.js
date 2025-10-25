@@ -570,8 +570,8 @@ function generateInvoicePreview(invoice, invoiceId, isPreview = false) {
             <!-- Simple Professional Header -->
             <div class="invoice-header-preview">
                 <div class="company-info">
-                    <h2>SHIVAM INDANE GAS</h2>
-                    <p>Professional Gas Services</p>
+                    <h2>BILLA TRADERS</h2>
+                    <p>DICHPALLY RS, HYD-NZB ROAD, NIZAMABAD TELANGANA 503175</p>
                 </div>
                 <div class="invoice-meta">
                     <div class="invoice-details-meta">
