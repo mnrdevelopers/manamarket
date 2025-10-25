@@ -227,6 +227,7 @@ function filterInvoices(searchTerm) {
     const filteredInvoices = currentInvoices.filter(invoice => 
         invoice.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
         invoice.customerMobile.includes(searchTerm) ||
+        (invoice.customerAddress && invoice.customerAddress.toLowerCase().includes(searchTerm.toLowerCase())) || // Search Address
         invoice.id.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
@@ -331,6 +332,7 @@ function loadInvoiceIntoEditForm(invoice, invoiceId) {
     // Set customer details
     document.getElementById('edit-customer-name').value = invoice.customerName || '';
     document.getElementById('edit-customer-mobile').value = invoice.customerMobile || '';
+    document.getElementById('edit-customer-address').value = invoice.customerAddress || ''; // NEW FIELD
     
     // Clear existing products
     const productsContainer = document.getElementById('edit-products-container');
@@ -450,6 +452,7 @@ function updateInvoice() {
     // Get updated customer details
     const customerName = document.getElementById('edit-customer-name').value;
     const customerMobile = document.getElementById('edit-customer-mobile').value;
+    const customerAddress = document.getElementById('edit-customer-address').value; // NEW FIELD
     
     // Get updated products
     const products = [];
@@ -483,6 +486,7 @@ function updateInvoice() {
     const updatedInvoice = {
         customerName: customerName,
         customerMobile: customerMobile,
+        customerAddress: customerAddress, // NEW FIELD
         products: products,
         subtotal: subtotal,
         gstAmount: gstAmount,
