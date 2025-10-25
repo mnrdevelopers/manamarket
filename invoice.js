@@ -562,16 +562,20 @@ function initProductSearch() {
     
     if (!searchInput || !searchResults) return;
     
-    searchInput.addEventListener('input', debounce(function(e) {
+    let timeoutId;
+    searchInput.addEventListener('input', function(e) {
         const searchTerm = e.target.value.trim();
+        clearTimeout(timeoutId);
         
         if (searchTerm.length < 2) {
             searchResults.style.display = 'none';
             return;
         }
         
-        searchProducts(searchTerm, searchResults);
-    }, 300));
+        timeoutId = setTimeout(() => {
+            searchProducts(searchTerm, searchResults);
+        }, 300);
+    });
     
     // Close search results when clicking outside
     document.addEventListener('click', function(e) {
@@ -640,19 +644,6 @@ function addProductFromSearch(name, price, gst) {
     // Trigger calculation
     calculateProductTotal(lastRow);
     calculateTotals();
-}
-
-// Debounce function for search
-function debounce(func, wait) {
-    let timeout;
-    return function executedFunction(...args) {
-        const later = () => {
-            clearTimeout(timeout);
-            func(...args);
-        };
-        clearTimeout(timeout);
-        timeout = setTimeout(later, wait);
-    };
 }
 
 function loadAvailableProducts() {
