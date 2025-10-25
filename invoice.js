@@ -285,6 +285,7 @@ async function saveInvoice(e) {
     // Get customer details
     const customerName = document.getElementById('customer-name').value;
     const customerMobile = document.getElementById('customer-mobile').value;
+    const customerAddress = document.getElementById('customer-address').value;
     
     if (!customerName || !customerMobile) {
         showMessage('Please fill in customer details', 'error');
@@ -331,6 +332,7 @@ async function saveInvoice(e) {
         invoiceNumber: invoiceNumber,
         customerName: customerName,
         customerMobile: customerMobile,
+        customerAddress: customerAddress, // NEW FIELD
         products: products,
         subtotal: subtotal,
         gstAmount: gstAmount,
@@ -389,6 +391,9 @@ function resetInvoiceForm() {
     
     // Reset totals
     calculateTotals();
+    
+    // Reset address field
+    document.getElementById('customer-address').value = '';
 }
 
 // Load recent invoices for dashboard
@@ -537,13 +542,18 @@ function generateInvoicePreview(invoice, invoiceId, isPreview = false) {
     let invoiceDate;
     if (invoice.createdAt) {
         if (typeof invoice.createdAt.toDate === 'function') {
-            invoiceDate = invoice.createdAt.toDate().toLocaleDateString();
+            invoiceDate = invoice.createdAt.toDate().toLocaleDateString() || 'N/A';
         } else {
-            invoiceDate = new Date(invoice.createdAt).toLocaleDateString();
+            invoiceDate = new Date(invoice.createdAt).toLocaleDateString() || 'N/A';
         }
     } else {
         invoiceDate = new Date().toLocaleDateString();
     }
+    
+    // Handle Address display
+    const customerAddressHtml = invoice.customerAddress ? 
+        invoice.customerAddress.replace(/\n/g, '<br>') : 
+        'N/A';
     
     // Use invoice number if available, otherwise use ID
     const displayInvoiceNumber = invoice.invoiceNumber || invoiceId;
@@ -553,8 +563,11 @@ function generateInvoicePreview(invoice, invoiceId, isPreview = false) {
     if (invoice.products && invoice.products.length > 0) {
         invoice.products.forEach((product, index) => {
             // Calculate GST amounts for display
-            const priceNoGst = (product.price / (1 + (product.gst / 100)));
-            const gstAmountPerUnit = product.price - priceNoGst;
+            // NOTE: Assuming `product.price` already includes GST and `product.total` is total price including GST for the line item.
+            const unitPriceInclGst = product.price; // This is the input unit price from the form
+            const priceNoGst = unitPriceInclGst / (1 + (product.gst / 100));
+            const gstAmountPerUnit = unitPriceInclGst - priceNoGst;
+            
             const subtotalNoGst = priceNoGst * product.quantity;
             const totalGst = gstAmountPerUnit * product.quantity;
 
@@ -599,7 +612,7 @@ function generateInvoicePreview(invoice, invoiceId, isPreview = false) {
                     <h4>Bill To:</h4>
                     <p><strong>${invoice.customerName}</strong></p>
                     <p>Mobile: ${invoice.customerMobile}</p>
-                    <p>Address: N/A</p>
+                    <p>Address: ${customerAddressHtml}</p>
                 </div>
                 <div class="invoice-meta-info">
                     <div class="meta-row"><strong>Invoice No:</strong> <span>${displayInvoiceNumber}</span></div>
@@ -624,11 +637,6 @@ function generateInvoicePreview(invoice, invoiceId, isPreview = false) {
                 </thead>
                 <tbody>
                     ${productsRows}
-                    <!-- Placeholder rows for aesthetics -->
-                    <tr><td colspan="7" class="placeholder-row"></td></tr>
-                    <tr><td colspan="7" class="placeholder-row"></td></tr>
-                    <tr><td colspan="7" class="placeholder-row"></td></tr>
-                    <tr><td colspan="7" class="placeholder-row"></td></tr>
                 </tbody>
             </table>
             
@@ -968,6 +976,7 @@ function initInvoicePage() {
             const tempInvoice = {
                 customerName: customerName,
                 customerMobile: customerMobile,
+                customerAddress: document.getElementById('customer-address').value,
                 products: [],
                 subtotal: parseFloat(document.getElementById('subtotal-amount').textContent.replace('₹', '')) || 0,
                 gstAmount: parseFloat(document.getElementById('gst-amount').textContent.replace('₹', '')) || 0,
