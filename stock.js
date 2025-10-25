@@ -46,9 +46,13 @@ function setupStockEventListeners() {
     // Search functionality
     const searchInput = document.getElementById('search-products');
     if (searchInput) {
-        searchInput.addEventListener('input', debounce(function(e) {
-            filterProducts(e.target.value);
-        }, 300));
+        let timeoutId;
+        searchInput.addEventListener('input', function(e) {
+            clearTimeout(timeoutId);
+            timeoutId = setTimeout(() => {
+                filterProducts(e.target.value);
+            }, 300);
+        });
     }
     
     // Refresh button
