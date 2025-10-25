@@ -1,69 +1,64 @@
-// --- START Firebase Initialization ---
-// NOTE: All applications deployed in this environment MUST use the global variables 
-// __firebase_config and __initial_auth_token for secure, authenticated, and persistent storage.
+// Dynamic Firebase Configuration & Initialization (MNR INVOBILL)
 
-// Retrieve config securely from the environment
-let firebaseConfig;
-try {
-    firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
-} catch (e) {
-    console.error('Error parsing Firebase config:', e);
-    firebaseConfig = {};
-}
+// NOTE: DO NOT hardcode firebaseConfig here.
+// Use the global __firebase_config provided by the environment.
 
-// Initialize Firebase App
-let app, auth, db;
-try {
-    if (Object.keys(firebaseConfig).length === 0 || !firebaseConfig.apiKey) {
-        throw new Error('Firebase config not loaded correctly.');
-    }
-    
-    // Check if app is already initialized (for hot reloads)
-    if (!firebase.apps.length) {
-        app = firebase.initializeApp(firebaseConfig);
-    } else {
-        app = firebase.app();
-    }
-    
-    // Initialize services
-    auth = firebase.auth(app);
-    db = firebase.firestore(app);
-    
-    // Make auth and db globally accessible for other scripts
-    window.auth = auth;
-    window.db = db;
-    
-    // Sign in using the custom token provided by the environment, or anonymously if not available.
-    const signIn = async () => {
+let auth;
+let db;
+
+/**
+ * Initializes Firebase services using environment variables.
+ * @returns {Promise<void>}
+ */
+async function initializeFirebase() {
+    try {
+        // Safely parse the global config provided by the environment
+        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+
+        if (!firebaseConfig.apiKey) {
+            throw new Error("Firebase config not loaded correctly. Missing apiKey.");
+        }
+
+        // 1. Initialize App
+        const app = firebase.initializeApp(firebaseConfig);
+        
+        // 2. Initialize Services
+        auth = firebase.auth(app);
+        db = firebase.firestore(app);
+
+        // Make auth and db globally accessible
+        window.auth = auth;
+        window.db = db;
+        
+        console.log('Firebase services initialized successfully.');
+
+        // 3. Handle Custom Authentication Token
         const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+        
         if (initialAuthToken) {
-            try {
-                await auth.signInWithCustomToken(initialAuthToken);
-                console.log('Signed in successfully using custom token.');
-            } catch (error) {
-                console.error('Error signing in with custom token, signing in anonymously:', error);
-                await auth.signInAnonymously();
-            }
-        } else {
-            // Fallback for environments where the token is unavailable
+            console.log("Attempting sign-in with custom token...");
+            await auth.signInWithCustomToken(initialAuthToken);
+        } else if (!auth.currentUser) {
+            // Fallback for environments without custom auth: Sign in anonymously
+            console.log("No custom token found, signing in anonymously...");
             await auth.signInAnonymously();
         }
-    };
-    
-    // Run the sign-in routine
-    signIn().catch(e => console.error("Initial sign-in failed:", e));
 
-} catch (e) {
-    console.error('Firebase Initialization failed:', e);
-    // Provide generic window objects to prevent script errors in other files
-    window.auth = null; 
-    window.db = null;
+        // 4. Setup Authentication Observer
+        setupAuthObserver();
+        
+    } catch (error) {
+        console.error('Firebase Initialization failed:', error);
+        // Display generic error on screen if possible (assuming showMessage exists)
+        if (typeof showMessage === 'function') {
+            showMessage('Authentication Service Error. Please check configuration.', 'error');
+        }
+        // Ensure loading screen is hidden even on failure
+        hideLoadingScreen();
+    }
 }
 
-// --- END Firebase Initialization ---
-
-
-// Global message display function
+// Global message display function (copied from app.js)
 function showMessage(message, type) {
     const messageEl = document.getElementById('auth-message');
     if (messageEl) {
@@ -71,7 +66,6 @@ function showMessage(message, type) {
         messageEl.className = `message ${type}`;
         messageEl.classList.remove('hidden');
         
-        // Auto-hide success messages after 3 seconds
         if (type === 'success') {
             setTimeout(() => {
                 messageEl.classList.add('hidden');
@@ -105,16 +99,13 @@ function isAppPage() {
 
 // Setup authentication state observer
 function setupAuthObserver() {
-    // Only run if auth service was successfully initialized
-    if (!auth) return;
-
     auth.onAuthStateChanged((user) => {
         console.log('=== AUTH STATE CHANGED ===');
-        console.log('User:', user ? (user.email || user.uid) : 'null');
+        console.log('User:', user ? user.uid : 'null');
         
-        if (user && !user.isAnonymous) {
-            // User is signed in with a persistent account (email/password or custom token)
-            console.log('User signed in (Non-Anonymous)');
+        if (user) {
+            // User is signed in
+            console.log('User signed in');
             
             if (isAuthPage()) {
                 // Redirect to main app if on auth page
@@ -127,17 +118,8 @@ function setupAuthObserver() {
                     initApp();
                 }
             }
-        } else if (user && user.isAnonymous) {
-            // User is signed in anonymously (from initial load), 
-            // only allow access to the auth page or prevent app initialization.
-            if (isAppPage()) {
-                 console.log('Anonymous user on main app, waiting for sign-in/redirect.');
-            } else {
-                 console.log('Anonymous user on auth page, ready for login/register.');
-                 hideLoadingScreen();
-            }
         } else {
-            // User is signed out (or token failed)
+            // User is signed out
             console.log('User signed out');
             
             if (isAppPage()) {
@@ -157,15 +139,14 @@ function setupAuthObserver() {
 function hideLoadingScreen() {
     const loadingScreen = document.getElementById('loading-screen');
     if (loadingScreen) {
-        // Add hidden class for fade out effect
         loadingScreen.classList.add('hidden');
-        
-        // Remove from DOM after animation completes
         setTimeout(() => {
             loadingScreen.style.display = 'none';
         }, 500);
     }
 }
+
+// --- Login/Register/Reset Form Handlers (Kept for completeness) ---
 
 // Login Form Handler
 function setupLoginForm() {
@@ -174,24 +155,20 @@ function setupLoginForm() {
         loginForm.addEventListener('submit', (e) => {
             e.preventDefault();
             
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
             
-            // Show loading state
             const submitBtn = e.target.querySelector('button[type="submit"]');
             const originalText = submitBtn.textContent;
             submitBtn.textContent = 'Logging in...';
             submitBtn.disabled = true;
             
             auth.signInWithEmailAndPassword(email, password)
-                .then((userCredential) => {
-                    // Signed in successfully
+                .then(() => {
                     showMessage('Login successful! Redirecting...', 'success');
-                    // The auth state observer will handle redirection automatically
                 })
                 .catch((error) => {
                     showMessage(error.message, 'error');
-                    // Reset button
                     submitBtn.textContent = originalText;
                     submitBtn.disabled = false;
                 });
@@ -199,61 +176,50 @@ function setupLoginForm() {
     }
 }
 
-// Registration Form Handler (New)
+// Register Form Handler (Updated to also save settings)
 function setupRegisterForm() {
     const registerForm = document.getElementById('register-form');
     if (registerForm) {
-        registerForm.addEventListener('submit', async (e) => {
+        registerForm.addEventListener('submit', (e) => {
             e.preventDefault();
             
-            // 1. Get user credentials
-            const email = document.getElementById('reg-email').value;
-            const password = document.getElementById('reg-password').value;
+            const email = document.getElementById('register-email').value;
+            const password = document.getElementById('register-password').value;
+            const businessName = document.getElementById('register-business-name').value;
+            const address = document.getElementById('register-address').value;
             
-            // 2. Get business details
-            const businessName = document.getElementById('reg-business-name').value;
-            const businessAddress = document.getElementById('reg-business-address').value;
-            const gstin = document.getElementById('reg-gstin').value;
-            
-            // Show loading state
             const submitBtn = e.target.querySelector('button[type="submit"]');
             const originalText = submitBtn.textContent;
             submitBtn.textContent = 'Registering...';
             submitBtn.disabled = true;
+            
+            auth.createUserWithEmailAndPassword(email, password)
+                .then((userCredential) => {
+                    const user = userCredential.user;
+                    console.log('User created:', user.uid);
 
-            try {
-                // 3. Create Firebase User
-                const userCredential = await auth.createUserWithEmailAndPassword(email, password);
-                const user = userCredential.user;
-                
-                // 4. Save Initial Business Settings
-                const settingsData = {
-                    businessName: businessName,
-                    address: businessAddress,
-                    gstin: gstin,
-                    terms: 'Custom terms not set. Please update in Settings.',
-                    pan: 'N/A', // Assuming PAN is optional/added later
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                    createdBy: user.uid
-                };
-                
-                // Save to a dedicated settings document (settings/business_info)
-                // Note: The Firestore security rules must allow this write.
-                await db.collection('settings').doc('business_info').set(settingsData);
-                
-                showMessage('Registration successful! Please log in.', 'success');
-                
-                // Switch back to login form
-                document.getElementById('register-form').classList.add('hidden');
-                document.getElementById('login-form').classList.remove('hidden');
-                
-            } catch (error) {
-                showMessage(error.message, 'error');
-            } finally {
-                // Reset button
-                submitBtn.textContent = originalText;
-                submitBtn.disabled = false;
-            }
+                    // Save initial business settings
+                    const settingsData = {
+                        businessName: businessName,
+                        address: address,
+                        gstin: document.getElementById('register-gstin').value || 'N/A',
+                        pan: document.getElementById('register-pan').value || 'N/A',
+                        bankDetails: document.getElementById('register-bank-details').value || 'N/A',
+                        terms: document.getElementById('register-terms').value || 'Payment due upon receipt. Goods once sold cannot be returned.',
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                        createdBy: user.uid // Crucial for security rules
+                    };
+
+                    return db.collection('settings').doc('business_info').set(settingsData);
+                })
+                .then(() => {
+                    showMessage('Registration successful! Redirecting...', 'success');
+                })
+                .catch((error) => {
+                    showMessage(error.message, 'error');
+                    submitBtn.textContent = originalText;
+                    submitBtn.disabled = false;
+                });
         });
     }
 }
@@ -267,7 +233,6 @@ function setupResetPasswordForm() {
             
             const email = document.getElementById('reset-email').value;
             
-            // Show loading state
             const submitBtn = e.target.querySelector('button[type="submit"]');
             const originalText = submitBtn.textContent;
             submitBtn.textContent = 'Sending...';
@@ -288,18 +253,40 @@ function setupResetPasswordForm() {
     }
 }
 
-// Toggle between Login, Register, and Reset Password forms
+// Toggle between Login/Register/Reset Password forms
 function setupFormToggles() {
+    const showRegisterLink = document.getElementById('show-register-link');
+    const showLoginLink = document.getElementById('show-login-link');
     const forgotPasswordLink = document.getElementById('forgot-password-link');
     const backToLoginLink = document.getElementById('back-to-login');
-    const registerLink = document.getElementById('register-link');
-    const backToLoginFromReg = document.getElementById('back-to-login-from-reg');
+    
+    // Function to hide all forms
+    const hideAllForms = () => {
+        document.getElementById('login-form').classList.add('hidden');
+        document.getElementById('register-form').classList.add('hidden');
+        document.getElementById('reset-password-form').classList.add('hidden');
+    };
+
+    if (showRegisterLink) {
+        showRegisterLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            hideAllForms();
+            document.getElementById('register-form').classList.remove('hidden');
+        });
+    }
+
+    if (showLoginLink) {
+        showLoginLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            hideAllForms();
+            document.getElementById('login-form').classList.remove('hidden');
+        });
+    }
     
     if (forgotPasswordLink) {
         forgotPasswordLink.addEventListener('click', (e) => {
             e.preventDefault();
-            document.getElementById('login-form').classList.add('hidden');
-            document.getElementById('register-form').classList.add('hidden');
+            hideAllForms();
             document.getElementById('reset-password-form').classList.remove('hidden');
         });
     }
@@ -307,26 +294,7 @@ function setupFormToggles() {
     if (backToLoginLink) {
         backToLoginLink.addEventListener('click', (e) => {
             e.preventDefault();
-            document.getElementById('reset-password-form').classList.add('hidden');
-            document.getElementById('register-form').classList.add('hidden');
-            document.getElementById('login-form').classList.remove('hidden');
-        });
-    }
-
-    if (registerLink) {
-        registerLink.addEventListener('click', (e) => {
-            e.preventDefault();
-            document.getElementById('login-form').classList.add('hidden');
-            document.getElementById('reset-password-form').classList.add('hidden');
-            document.getElementById('register-form').classList.remove('hidden');
-        });
-    }
-
-    if (backToLoginFromReg) {
-        backToLoginFromReg.addEventListener('click', (e) => {
-            e.preventDefault();
-            document.getElementById('register-form').classList.add('hidden');
-            document.getElementById('reset-password-form').classList.add('hidden');
+            hideAllForms();
             document.getElementById('login-form').classList.remove('hidden');
         });
     }
@@ -346,8 +314,7 @@ function setupLogoutButtons() {
             logoutBtn.addEventListener('click', function(e) {
                 e.preventDefault();
                 
-                // IMPORTANT: We use a custom modal or message box instead of confirm()
-                if (window.confirm('Are you sure you want to log out?')) {
+                if (confirm('Are you sure you want to log out?')) {
                     console.log('Logout button clicked:', btnId);
                     auth.signOut().then(() => {
                         showMessage('Logged out successfully', 'success');
@@ -364,13 +331,13 @@ function setupLogoutButtons() {
 document.addEventListener('DOMContentLoaded', () => {
     console.log('Auth.js loaded');
     
-    // Setup auth observer first
-    setupAuthObserver();
+    // Start the dynamic Firebase initialization process
+    initializeFirebase();
     
     // Setup forms if on auth page
     if (isAuthPage()) {
         setupLoginForm();
-        setupRegisterForm(); // Setup new register form
+        setupRegisterForm();
         setupResetPasswordForm();
         setupFormToggles();
     }
