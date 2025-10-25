@@ -112,7 +112,7 @@ function refreshAppHeader() {
     // 3. Update all header H1s across all pages
     document.querySelectorAll('.logo-text h1').forEach(h1 => {
         // The invoice pages use 'INVOBILL' suffix
-        h1.textContent = `${businessName.toUpperCase()} INVOBILL`;
+        h1.textContent = `${businessName.toUpperCase()}`;
     });
 
     // 4. Update the loading screen text (if present)
