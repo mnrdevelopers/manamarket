@@ -33,15 +33,18 @@ function setupCustomerEventListeners() {
 
     const searchInput = document.getElementById('search-customers');
     if (searchInput) {
-        searchInput.addEventListener('input', debounce(function(e) {
-            filterCustomers(e.target.value);
-        }, 300));
+        let timeoutId;
+        searchInput.addEventListener('input', function(e) {
+            clearTimeout(timeoutId);
+            timeoutId = setTimeout(() => {
+                filterCustomers(e.target.value);
+            }, 300);
+        });
     }
     
     // Modal Event Listeners (defined in app.js setupGlobalModalHandlers)
     document.getElementById('save-customer-btn').addEventListener('click', saveCustomer);
 }
-
 // ----------------------------------------------------
 // Data Loading and Display
 // ----------------------------------------------------
