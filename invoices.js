@@ -42,9 +42,13 @@ function setupInvoicesEventListeners() {
     // Search functionality
     const searchInput = document.getElementById('search-invoices');
     if (searchInput) {
-        searchInput.addEventListener('input', debounce(function(e) {
-            filterInvoices(e.target.value);
-        }, 300));
+        let timeoutId;
+        searchInput.addEventListener('input', function(e) {
+            clearTimeout(timeoutId);
+            timeoutId = setTimeout(() => {
+                filterInvoices(e.target.value);
+            }, 300);
+        });
     }
     
     // Refresh button
