@@ -1,12 +1,15 @@
 // Main Application Logic
-// This version supports multi-page navigation, authentication, and dynamic settings loading.
 
 // Global page management function
 function showPage(pageId) {
     console.log('showPage called for:', pageId);
     
-    // Update URL hash immediately for page persistence
-    window.location.hash = '#' + pageId.replace('-page', '');
+    // 1. Update the URL hash without reloading the page
+    // Converts 'invoices-page' to 'invoices'
+    const hashId = pageId.replace('-page', '');
+    if (window.location.hash.substring(1) !== hashId) {
+        window.history.pushState(null, null, `#${hashId}`);
+    }
 
     // Hide all pages
     const pages = document.querySelectorAll('.page');
@@ -37,33 +40,35 @@ function showPage(pageId) {
     }
 }
 
-// Get the initial page from URL hash, defaulting to dashboard
-function getInitialPage() {
-    let page = window.location.hash.substring(1);
-    
-    if (page && document.getElementById(page + '-page')) {
-        return page + '-page';
-    }
-    // Default fallback to dashboard
-    return 'dashboard-page';
-}
-
 // Set active state for navigation button
 function setActiveNavButton(pageId) {
-    let baseId = pageId.replace('-page', '');
+    let activeButtonId = '';
     
-    // Handle specific mappings
-    if (baseId === 'invoice') baseId = 'create-invoice-nav';
-    if (baseId === 'invoices') baseId = 'invoices-list-nav';
-    if (baseId === 'stock') baseId = 'stock-management-nav';
-    if (baseId === 'customers') baseId = 'customers-nav';
-    if (baseId === 'settings') baseId = 'settings-nav';
-
-    // Set active state for the corresponding nav button using attribute selector for robustness
-    document.querySelectorAll(`[id^="${baseId}"]`).forEach(btn => {
-        if (btn.id.startsWith(baseId)) {
-            btn.classList.add('active');
-        }
+    switch(pageId) {
+        case 'dashboard-page':
+            activeButtonId = 'dashboard-nav';
+            break;
+        case 'invoice-page':
+            activeButtonId = 'create-invoice-nav-2';
+            break;
+        case 'invoices-page':
+            activeButtonId = 'invoices-list-nav-3';
+            break;
+        case 'stock-page':
+            activeButtonId = 'stock-management-nav-4';
+            break;
+        case 'customers-page':
+            activeButtonId = 'customers-nav-5';
+            break;
+        case 'settings-page':
+            activeButtonId = 'settings-nav-6';
+            break;
+    }
+    
+    // Also set active state for buttons with the same function on other pages
+    const activeButtons = document.querySelectorAll(`[id^="${activeButtonId.split('-')[0]}"]`);
+    activeButtons.forEach(btn => {
+        btn.classList.add('active');
     });
 }
 
@@ -75,51 +80,57 @@ function hideAllPages() {
     });
 }
 
-/**
- * Updates all visible instances of the application and business name/address.
- * This should be called on app initialization and after settings are saved.
- * @param {object} settings - The current business settings (optional).
- */
-function refreshAppHeader(settings) {
-    const businessName = settings ? settings.businessName : 'MNR INVOBILL';
-    const address = settings ? settings.address : 'Professional Invoicing for Every Business';
+// Function to determine the initial page on load based on URL hash
+function getInitialPage() {
+    // Get hash and remove leading '#'
+    const hash = window.location.hash.substring(1); 
+    const validPages = ['dashboard', 'invoice', 'invoices', 'stock', 'customers', 'settings'];
     
-    // 1. Update document title (browser tab)
-    document.title = `${businessName} - Professional Invoice System`;
-
-    // 2. Update loading screen title
-    const loadingAppName = document.getElementById('loading-app-name');
-    if (loadingAppName) {
-        loadingAppName.textContent = businessName;
+    if (hash && validPages.includes(hash)) {
+        return `${hash}-page`;
     }
     
-    // 3. Update all header display elements (logo section)
-    document.querySelectorAll('.app-name-display').forEach(el => {
-        el.textContent = businessName;
-    });
-
-    // 4. Update the hardcoded business address/tagline on the loading screen and potentially auth page (if present)
-    // Note: The main address fields for the invoice preview and settings page are handled by settings.js and invoice.js
-    console.log(`App headers refreshed. Name: ${businessName}, Address/Tagline: ${address}`);
+    // Default to dashboard
+    return 'dashboard-page';
 }
 
+/**
+ * Updates the visible business name across all page headers.
+ */
+function refreshAppHeader() {
+    // 1. Get current settings from global cache or hardcoded defaults
+    const settings = window.currentSettings || {
+        businessName: 'BILLA TRADERS'
+    };
+    const businessName = settings.businessName || 'BILLA TRADERS';
+
+    // 2. Update the main application title (for browser tab)
+    if (document.title) {
+        document.title = `${businessName} - Professional Invoice System`;
+    }
+
+    // 3. Update all header H1s across all pages
+    document.querySelectorAll('.logo-text h1').forEach(h1 => {
+        // The invoice pages use 'INVOBILL' suffix
+        h1.textContent = `${businessName.toUpperCase()} INVOBILL`;
+    });
+
+    // 4. Update the loading screen text (if present)
+    const loadingHeader = document.querySelector('#loading-screen h2');
+    if (loadingHeader) {
+        loadingHeader.textContent = businessName.toUpperCase();
+    }
+    
+    // 5. Update Auth Page Titles (if current page is auth.html - note: this code is in index.html)
+    // We cannot access auth.html's DOM, so we rely on the above global updates
+    // for elements that are present in the index.html shared header blocks.
+
+    console.log('Application header refreshed with:', businessName);
+}
 
 // Initialize the application
 function initApp() {
     console.log('Initializing app...');
-    
-    // Load settings first (if successful, currentSettings will be populated)
-    if (typeof loadSettings === 'function') {
-        loadSettings().then((settings) => {
-             // Refresh header after settings are loaded
-            refreshAppHeader(settings);
-        }).catch((error) => {
-            console.warn("Failed to load settings on init:", error);
-            refreshAppHeader(null); // Use default fallback
-        });
-    } else {
-        refreshAppHeader(null); // Use default fallback if settings.js isn't linked
-    }
 
      // Setup global print handler
     setupGlobalPrintHandler();
@@ -132,22 +143,49 @@ function initApp() {
         console.log('No user logged in, redirecting will be handled by auth observer');
         return;
     }
+
+    // IMPORTANT: Load settings immediately on app init before showing pages
+    if (typeof loadSettings === 'function') {
+        // Run asynchronously, but let the rest of initApp proceed
+        loadSettings(); 
+    }
     
     // Setup navigation
     setupNavigation();
     
-    // Show the page based on the URL hash
+    // Show the initial page based on URL hash or default to dashboard
     const initialPage = getInitialPage();
     console.log('User logged in, showing initial page:', initialPage);
+    
+    // Note: showPage is called, which updates the hash if it was missing (e.g. initial load without hash)
     showPage(initialPage);
     
-    // Load dashboard data if starting on dashboard
+    // Load dashboard data if starting on dashboard, otherwise just run page init
     if (initialPage === 'dashboard-page') {
         setTimeout(() => {
             console.log('Loading dashboard data after timeout');
             loadDashboardData();
         }, 300);
+    } else {
+        // Ensure other pages run their initialization logic immediately after being shown
+        initActivePage();
     }
+
+
+    // Handle back/forward button for hash changes
+    window.addEventListener('popstate', function() {
+        const pageId = getInitialPage();
+        // Use direct DOM manipulation for smooth transition without triggering history push
+        const targetPage = document.getElementById(pageId);
+        if (targetPage) {
+            hideAllPages();
+            targetPage.style.display = 'block';
+            targetPage.classList.add('active');
+            setActiveNavButton(pageId);
+            initActivePage();
+        }
+    });
+
     
     // Hide loading screen
     hideLoadingScreen();
@@ -171,54 +209,192 @@ function hideLoadingScreen() {
 function setupNavigation() {
     console.log('Setting up navigation...');
     
-    const navMapping = {
-        'dashboard': 'dashboard-page',
-        'create-invoice': 'invoice-page',
-        'invoices-list': 'invoices-page',
-        'stock-management': 'stock-page',
-        'customers': 'customers-page',
-        'settings': 'settings-page'
-    };
-
-    // Iterate through all possible navigation buttons and attach listener
-    Object.keys(navMapping).forEach(baseId => {
-        const targetPageId = navMapping[baseId];
-        
-        // Find all buttons starting with the base ID (e.g., dashboard-nav, dashboard-nav-2, etc.)
-        document.querySelectorAll(`[id^="${baseId}-nav"]`).forEach(navBtn => {
-            if (navBtn) {
-                navBtn.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    console.log(`Nav clicked for ${targetPageId}`);
-                    showPage(targetPageId);
-                });
-            }
-        });
+    // Dashboard navigation
+    const dashboardNav1 = document.getElementById('dashboard-nav');
+    const dashboardNav2 = document.getElementById('dashboard-nav-2');
+    const dashboardNav3 = document.getElementById('dashboard-nav-3');
+    const dashboardNav4 = document.getElementById('dashboard-nav-4');
+    const dashboardNav5 = document.getElementById('dashboard-nav-5');
+    const dashboardNav6 = document.getElementById('dashboard-nav-6');
+    
+    [dashboardNav1, dashboardNav2, dashboardNav3, dashboardNav4, dashboardNav5, dashboardNav6].forEach((nav, index) => {
+        if (nav) {
+            nav.addEventListener('click', function(e) {
+                e.preventDefault();
+                console.log('Dashboard nav clicked', index + 1);
+                showPage('dashboard-page');
+                setTimeout(loadDashboardData, 100);
+            });
+        }
     });
     
-    // Quick action buttons in dashboard
-    const quickActions = {
-        'quick-create-invoice': 'invoice-page',
-        'quick-view-invoices': 'invoices-page',
-        'view-all-invoices': 'invoices-page',
-        'quick-stock-management': 'stock-page'
-    };
-    
-    Object.keys(quickActions).forEach(btnId => {
-        const btn = document.getElementById(btnId);
-        if (btn) {
-            btn.addEventListener('click', function(e) {
+    // Create invoice navigation
+    const createInvoiceNav1 = document.getElementById('create-invoice-nav');
+    const createInvoiceNav2 = document.getElementById('create-invoice-nav-2');
+    const createInvoiceNav3 = document.getElementById('create-invoice-nav-3');
+    const createInvoiceNav4 = document.getElementById('create-invoice-nav-4');
+    const createInvoiceNav5 = document.getElementById('create-invoice-nav-5');
+    const createInvoiceNav6 = document.getElementById('create-invoice-nav-6');
+
+    [createInvoiceNav1, createInvoiceNav2, createInvoiceNav3, createInvoiceNav4, createInvoiceNav5, createInvoiceNav6].forEach((nav, index) => {
+        if (nav) {
+            nav.addEventListener('click', function(e) {
                 e.preventDefault();
-                showPage(quickActions[btnId]);
+                console.log('Create invoice nav clicked', index + 1);
+                showPage('invoice-page');
+                // Refresh available products when switching to invoice page
+                if (typeof loadAvailableProducts === 'function') {
+                    setTimeout(loadAvailableProducts, 100);
+                }
+            });
+        }
+    });
+    
+    // Invoices list navigation
+    const invoicesNav1 = document.getElementById('invoices-list-nav');
+    const invoicesNav2 = document.getElementById('invoices-list-nav-2');
+    const invoicesNav3 = document.getElementById('invoices-list-nav-3');
+    const invoicesNav4 = document.getElementById('invoices-list-nav-4');
+    const invoicesNav5 = document.getElementById('invoices-list-nav-5');
+    const invoicesNav6 = document.getElementById('invoices-list-nav-6');
+    
+    [invoicesNav1, invoicesNav2, invoicesNav3, invoicesNav4, invoicesNav5, invoicesNav6].forEach((nav, index) => {
+        if (nav) {
+            nav.addEventListener('click', function(e) {
+                e.preventDefault();
+                console.log('Invoices list nav clicked', index + 1);
+                showPage('invoices-page');
+                // Load invoices if the function exists
+                if (typeof loadAllInvoices === 'function') {
+                    setTimeout(loadAllInvoices, 100);
+                }
             });
         }
     });
 
-    // Back to invoices button
+ // Stock management navigation
+const stockNav1 = document.getElementById('stock-management-nav');
+const stockNav2 = document.getElementById('stock-management-nav-2');
+const stockNav3 = document.getElementById('stock-management-nav-3');
+const stockNav4 = document.getElementById('stock-management-nav-4');
+const stockNav5 = document.getElementById('stock-management-nav-5');
+const stockNav6 = document.getElementById('stock-management-nav-6');
+
+[stockNav1, stockNav2, stockNav3, stockNav4, stockNav5, stockNav6].forEach((nav, index) => {
+    if (nav) {
+        nav.addEventListener('click', function(e) {
+            e.preventDefault();
+            console.log('Stock management nav clicked', index + 1);
+            showPage('stock-page');
+            
+            // Wait a bit for page to render, then load products
+            setTimeout(() => {
+                if (auth && auth.currentUser && typeof loadAllProducts === 'function') {
+                    loadAllProducts();
+                } else {
+                    console.log('Auth not ready or loadAllProducts not available');
+                }
+            }, 200);
+        });
+    }
+});
+
+    // Customers navigation (New)
+    const customersNavs = [
+        document.getElementById('customers-nav'), 
+        document.getElementById('customers-nav-2'), 
+        document.getElementById('customers-nav-3'), 
+        document.getElementById('customers-nav-4'),
+        document.getElementById('customers-nav-5'),
+        document.getElementById('customers-nav-6')
+    ];
+    customersNavs.forEach(nav => {
+        if (nav) {
+            nav.addEventListener('click', function(e) {
+                e.preventDefault();
+                showPage('customers-page');
+                if (typeof loadAllCustomers === 'function') {
+                    setTimeout(loadAllCustomers, 100);
+                }
+            });
+        }
+    });
+
+    // Settings navigation (New)
+    const settingsNavs = [
+        document.getElementById('settings-nav'), 
+        document.getElementById('settings-nav-2'), 
+        document.getElementById('settings-nav-3'), 
+        document.getElementById('settings-nav-4'),
+        document.getElementById('settings-nav-5'),
+        document.getElementById('settings-nav-6')
+    ];
+    settingsNavs.forEach(nav => {
+        if (nav) {
+            nav.addEventListener('click', function(e) {
+                e.preventDefault();
+                showPage('settings-page');
+                if (typeof loadSettings === 'function') {
+                    setTimeout(loadSettings, 100);
+                }
+            });
+        }
+    });
+    
+    // Quick action buttons in dashboard
+    const quickCreateInvoice = document.getElementById('quick-create-invoice');
+    const quickViewInvoices = document.getElementById('quick-view-invoices');
+    const viewAllInvoices = document.getElementById('view-all-invoices');
+    const quickStockManagement = document.getElementById('quick-stock-management');
+    
+    if (quickCreateInvoice) {
+        quickCreateInvoice.addEventListener('click', function(e) {
+            e.preventDefault();
+            console.log('Quick create invoice clicked');
+            showPage('invoice-page');
+        });
+    }
+    
+    if (quickViewInvoices) {
+        quickViewInvoices.addEventListener('click', function(e) {
+            e.preventDefault();
+            console.log('Quick view invoices clicked');
+            showPage('invoices-page');
+            if (typeof loadAllInvoices === 'function') {
+                setTimeout(loadAllInvoices, 100);
+            }
+        });
+    }
+    
+    if (viewAllInvoices) {
+        viewAllInvoices.addEventListener('click', function(e) {
+            e.preventDefault();
+            console.log('View all invoices clicked');
+            showPage('invoices-page');
+            if (typeof loadAllInvoices === 'function') {
+                setTimeout(loadAllInvoices, 100);
+            }
+        });
+    }
+
+    // Quick stock management button
+    if (quickStockManagement) {
+        quickStockManagement.addEventListener('click', function(e) {
+            e.preventDefault();
+            console.log('Quick stock management clicked');
+            showPage('stock-page');
+            if (typeof loadAllProducts === 'function') {
+                setTimeout(loadAllProducts, 100);
+            }
+        });
+    }
+    
+    // Back to invoices button in create invoice page
     const backToInvoices = document.getElementById('back-to-invoices');
     if (backToInvoices) {
         backToInvoices.addEventListener('click', function(e) {
             e.preventDefault();
+            console.log('Back to invoices clicked');
             showPage('invoices-page');
             if (typeof loadAllInvoices === 'function') {
                 setTimeout(loadAllInvoices, 100);
@@ -459,12 +635,12 @@ function initActivePage() {
                 setTimeout(initInvoicesPage, 100);
             }
             break;
-        case 'customers-page':
+        case 'customers-page': // Added New Page Init
             if (typeof initCustomersPage === 'function') {
                 setTimeout(initCustomersPage, 100);
             }
             break;
-        case 'settings-page':
+        case 'settings-page': // Added New Page Init
             if (typeof initSettingsPage === 'function') {
                 setTimeout(initSettingsPage, 100);
             }
@@ -561,9 +737,9 @@ function setupGlobalModalHandlers() {
             console.log('Closing product modal');
             document.getElementById('product-modal').classList.add('hidden');
         }
-
-        // Close customer modal
-        if (e.target.id === 'close-customer-modal' ||
+        
+        // Close customer modal (New)
+        if (e.target.id === 'close-customer-modal' || 
             e.target.id === 'cancel-customer-btn' ||
             e.target.closest('#close-customer-modal') ||
             e.target.closest('#cancel-customer-btn')) {
@@ -597,7 +773,6 @@ window.viewInvoice = function(invoiceId) {
     db.collection('invoices').doc(invoiceId).get()
         .then((doc) => {
             if (doc.exists) {
-                // Use the asynchronous function to ensure settings are loaded
                 generateInvoicePreview(doc.data(), doc.id);
                 document.getElementById('invoice-preview-modal').classList.remove('hidden');
             } else {
@@ -609,31 +784,8 @@ window.viewInvoice = function(invoiceId) {
         });
 };
 
-/**
- * Generates the professional invoice preview layout.
- * This is an asynchronous wrapper to ensure settings are loaded first.
- * @param {Object} invoice - The invoice data object.
- * @param {string} invoiceId - The Firestore document ID.
- */
-window.generateInvoicePreview = async function(invoice, invoiceId) {
-    // Ensure settings are loaded before proceeding
-    if (!window.currentSettings && typeof loadSettings === 'function') {
-        try {
-            await loadSettings();
-        } catch (error) {
-            console.warn("Could not load settings for preview, using defaults.", error);
-        }
-    }
-
-    const settings = window.currentSettings || {
-        businessName: 'MNR INVOBILL',
-        address: 'Professional Invoicing App',
-        gstin: 'N/A',
-        pan: 'N/A',
-        bankDetails: 'N/A',
-        terms: 'Payment due upon receipt. Thank you for your business!'
-    };
-    
+// Also ensure generateInvoicePreview is available
+window.generateInvoicePreview = function(invoice, invoiceId, isPreview = false) {
     const previewContent = document.getElementById('invoice-preview-content');
     if (!previewContent) return;
     
@@ -641,100 +793,103 @@ window.generateInvoicePreview = async function(invoice, invoiceId) {
     let invoiceDate;
     if (invoice.createdAt) {
         if (typeof invoice.createdAt.toDate === 'function') {
-            invoiceDate = invoice.createdAt.toDate().toLocaleDateString();
+            invoiceDate = invoice.createdAt.toDate().toLocaleDateString() || 'N/A';
         } else {
-            invoiceDate = new Date(invoice.createdAt).toLocaleDateString();
+            invoiceDate = new Date(invoice.createdAt).toLocaleDateString() || 'N/A';
         }
     } else {
         invoiceDate = new Date().toLocaleDateString();
     }
     
+    // Handle Address display
+    const customerAddressHtml = invoice.customerAddress ? 
+        invoice.customerAddress.replace(/\n/g, '<br>') : 
+        'N/A';
+    
     // Use invoice number if available, otherwise use ID
     const displayInvoiceNumber = invoice.invoiceNumber || invoiceId;
     
+    // Attempt to load settings if missing (although initApp should handle this)
+    if (!window.currentSettings && typeof loadSettings === 'function') {
+        console.warn('Settings missing during preview generation, attempting immediate load.');
+        // This blocks the UI temporarily but ensures settings are present for the print job.
+        // It's crucial for the print functionality to have the right header details.
+        // Using `await` here is fine since this is inside a global synchronous function called by an event handler.
+        // If this function were async, we'd use await. Since it's sync, we rely on the global variable being set
+        // by the earlier init call, and simply use a defensive structure here.
+        // For a safe, non-blocking check:
+        // We'll rely on the settings being loaded by initApp/refreshAppHeader
+    }
+    
+    // Load settings from global cache or use defaults
+    const settings = window.currentSettings || {
+        businessName: 'BILLA TRADERS',
+        address: 'DICHPALLY RS, HYD-NZB ROAD, NIZAMABAD TELANGANA 503175',
+        terms: '1. Goods once sold cannot be taken back. 2. Payment due within 30 days. 3. Disputes subject to Nizamabad jurisdiction.',
+        gstin: 'N/A',
+        pan: 'N/A'
+    };
+    
+    const companyAddressHtml = settings.address ? settings.address.replace(/\n/g, '<br>') : 'N/A';
+    const termsHtml = settings.terms ? settings.terms.replace(/\n/g, '<br>') : 'Terms not available.';
+
     // Generate products table rows
     let productsRows = '';
     if (invoice.products && invoice.products.length > 0) {
         invoice.products.forEach((product, index) => {
+            // Calculation of prices without GST is assumed to be handled in the form/save process
+            // and is approximated here for display using the final total and GST rate.
+            const totalInclGst = product.total;
+            const priceNoGst = totalInclGst / (1 + (product.gst / 100));
+            const totalGst = totalInclGst - priceNoGst;
+
             productsRows += `
                 <tr>
-                    <td class="qty-cell">${index + 1}</td>
+                    <td>${index + 1}</td>
                     <td class="product-name-cell">${product.name}</td>
                     <td class="qty-cell">${product.quantity}</td>
-                    <td class="qty-cell">₹${product.price.toFixed(2)}</td>
+                    <td class="price-cell">₹${(priceNoGst / product.quantity).toFixed(2)}</td>
                     <td class="gst-cell">${product.gst}%</td>
-                    <td class="qty-cell">₹${(product.total - product.gstAmount).toFixed(2)}</td>
-                    <td class="total-cell">₹${product.total.toFixed(2)}</td>
+                    <td class="gst-amount-cell">₹${totalGst.toFixed(2)}</td>
+                    <td class="total-cell">₹${totalInclGst.toFixed(2)}</td>
                 </tr>
             `;
         });
     }
 
-    // Determine GST Breakdown
-    const gstTotal = invoice.gstAmount || 0;
-    const isInterState = false; // Simplified assumption, can be dynamic
-    let gstBreakdown = '';
-
-    if (gstTotal > 0) {
-        if (isInterState) {
-            gstBreakdown = `
-                <div class="totals-row">
-                    <span class="label">IGST (${(gstTotal / invoice.subtotal * 100).toFixed(2)}%):</span>
-                    <span class="value">₹${gstTotal.toFixed(2)}</span>
-                </div>
-            `;
-        } else {
-            const halfGst = gstTotal / 2;
-            gstBreakdown = `
-                <div class="totals-row">
-                    <span class="label">CGST (${(halfGst / invoice.subtotal * 100).toFixed(2)}%):</span>
-                    <span class="value">₹${halfGst.toFixed(2)}</span>
-                </div>
-                <div class="totals-row">
-                    <span class="label">SGST (${(halfGst / invoice.subtotal * 100).toFixed(2)}%):</span>
-                    <span class="value">₹${halfGst.toFixed(2)}</span>
-                </div>
-            `;
-        }
-    }
-
-    const customerAddress = invoice.customerAddress ? `<p>${invoice.customerAddress.replace(/\n/g, '<br>')}</p>` : '<p>Address not provided</p>';
+    // Convert total to words (Simple conversion for demonstration)
+    const grandTotalInWords = convertNumberToWords(invoice.grandTotal.toFixed(2));
     
     previewContent.innerHTML = `
         <div class="invoice-paper-template">
-            <!-- Header (Company Details) -->
+            <!-- Professional Header -->
             <div class="invoice-header-print">
-                <div class="company-name-section">
-                    <p class="company-name-print">${settings.businessName}</p>
-                    <p class="company-address">${settings.address.replace(/\n/g, '<br>')}</p>
-                    <p class="company-details">GSTIN: ${settings.gstin || 'N/A'}</p>
-                    ${settings.pan ? `<p class="company-details">PAN: ${settings.pan}</p>` : ''}
+                <div class="company-logo-section">
+                    <!-- Placeholder for Company Logo -->
+                    <!-- <img src="favicon.png" alt="${settings.businessName} Logo" class="invoice-logo"> -->
+                    <div class="company-name-print">${settings.businessName}</div>
                 </div>
                 <div class="company-address-section">
-                    <h2 style="margin-bottom: 5px; color: #303841;">TAX INVOICE</h2>
-                    <p class="company-details">Mobile: ${settings.bankDetails || 'N/A'}</p>
-                    ${settings.bankDetails ? `<p class="company-details">Bank: ${settings.bankDetails}</p>` : ''}
+                    <p class="company-address">${companyAddressHtml}</p>
+                    <p class="company-details">GSTIN: ${settings.gstin || 'N/A'} | PAN: ${settings.pan || 'N/A'}</p>
                 </div>
             </div>
+            
+            <div class="document-title">TAX INVOICE</div>
 
-            <!-- Customer Details -->
+            <!-- Invoice and Customer Details -->
             <div class="details-section">
                 <div class="bill-to-info">
                     <h4>Bill To:</h4>
                     <p><strong>${invoice.customerName}</strong></p>
                     <p>Mobile: ${invoice.customerMobile}</p>
-                    ${customerAddress}
+                    <p>Address: ${customerAddressHtml}</p>
                 </div>
                 <div class="invoice-meta-info">
-                    <div class="meta-row">
-                        <span>Invoice No.:</span> <span class="invoice-number-simple">${displayInvoiceNumber}</span>
-                    </div>
-                    <div class="meta-row">
-                        <span>Date of Issue:</span> <span>${invoiceDate}</span>
-                    </div>
-                    <div class="meta-row">
-                        <span>Status:</span> <span class="invoice-status">${invoice.status}</span>
-                    </div>
+                    <div class="meta-row"><strong>Invoice No:</strong> <span>${displayInvoiceNumber}</span></div>
+                    <div class="meta-row"><strong>Date:</strong> <span>${invoiceDate}</span></div>
+                    <div class="meta-row"><strong>Status:</strong> <span>${invoice.status}</span></div>
+                    <div class="meta-row"><strong>Payment:</strong> <span>Pending/Cash</span></div>
                 </div>
             </div>
             
@@ -742,13 +897,13 @@ window.generateInvoicePreview = async function(invoice, invoiceId) {
             <table class="products-table-print">
                 <thead>
                     <tr>
-                        <th class="qty-cell">S.No.</th>
-                        <th class="product-name-cell">Description of Goods/Services</th>
-                        <th class="qty-cell">Qty</th>
-                        <th class="qty-cell">Rate (₹)</th>
-                        <th class="gst-cell">GST (%)</th>
-                        <th class="qty-cell">Taxable Value (₹)</th>
-                        <th class="total-cell">Amount (₹)</th>
+                        <th style="width: 5%;">#</th>
+                        <th style="width: 35%;">Product/Service</th>
+                        <th style="width: 10%;">Qty</th>
+                        <th style="width: 15%;">Unit Price (Excl. GST)</th>
+                        <th style="width: 10%;">GST %</th>
+                        <th style="width: 15%;">GST Amount</th>
+                        <th style="width: 10%;">Total (Incl. GST)</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -756,29 +911,32 @@ window.generateInvoicePreview = async function(invoice, invoiceId) {
                 </tbody>
             </table>
             
-            <!-- Totals Section -->
+            <!-- Totals and Signature Section -->
             <div class="summary-section">
                 <div class="amount-in-words">
-                    <p><strong>Amount in Words:</strong> Not Implemented Yet</p>
+                    <p><strong>Amount in Words:</strong> Rupees ${grandTotalInWords} only</p>
                 </div>
                 <div class="totals-preview-print">
                     <div class="totals-row">
-                        <span class="label">Subtotal:</span>
-                        <span class="value">₹${invoice.subtotal.toFixed(2)}</span>
+                        <span class="label">Subtotal (Excl. GST):</span>
+                        <span class="value">₹${(invoice.grandTotal - invoice.gstAmount).toFixed(2)}</span>
                     </div>
-                    ${gstBreakdown}
+                    <div class="totals-row">
+                        <span class="label">Total GST:</span>
+                        <span class="value">₹${invoice.gstAmount.toFixed(2)}</span>
+                    </div>
                     <div class="totals-row grand-total-row">
-                        <span class="label">GRAND TOTAL:</span>
+                        <span class="label">Grand Total:</span>
                         <span class="value">₹${invoice.grandTotal.toFixed(2)}</span>
                     </div>
                 </div>
             </div>
-            
-            <!-- Footer -->
+
+            <!-- Footer and Signature -->
             <div class="invoice-footer-print">
                 <div class="terms-conditions">
-                    <p><strong>Notes / Terms:</strong></p>
-                    <p>${settings.terms ? settings.terms.replace(/\n/g, '<br>') : 'Goods once sold cannot be returned.'}</p>
+                    <p><strong>Terms & Conditions:</strong></p>
+                    <p>${termsHtml}</p>
                 </div>
                 <div class="signature-section">
                     <p>For ${settings.businessName}</p>
@@ -789,6 +947,78 @@ window.generateInvoicePreview = async function(invoice, invoiceId) {
         </div>
     `;
 };
+
+// Simple function to convert number to words for invoice aesthetic (Copied from invoice.js)
+function convertNumberToWords(amount) {
+    if (typeof amount === 'string') {
+        amount = parseFloat(amount);
+    }
+    if (isNaN(amount) || amount === 0) {
+        return "Zero";
+    }
+    
+    const units = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine'];
+    const teens = ['Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'];
+    const tens = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
+
+    function convertGroup(n) {
+        let output = '';
+        if (n >= 100) {
+            output += units[Math.floor(n / 100)] + ' Hundred ';
+            n %= 100;
+        }
+        if (n >= 10 && n <= 19) {
+            output += teens[n - 10];
+        } else if (n >= 20) {
+            output += tens[Math.floor(n / 10)] + (n % 10 > 0 ? ' ' + units[n % 10] : '');
+        } else if (n > 0) {
+            output += units[n % 10];
+        }
+        return output.trim();
+    }
+
+    let wholePart = Math.floor(amount);
+    let decimalPart = Math.round((amount - wholePart) * 100);
+    let result = '';
+
+    let crores = Math.floor(wholePart / 10000000);
+    wholePart %= 10000000;
+
+    let lakhs = Math.floor(wholePart / 100000);
+    wholePart %= 100000;
+
+    let thousands = Math.floor(wholePart / 1000);
+    wholePart %= 1000;
+
+    let remainder = wholePart;
+    
+    if (crores > 0) {
+        result += convertGroup(crores) + ' Crore ';
+    }
+    if (lakhs > 0) {
+        result += convertGroup(lakhs) + ' Lakh ';
+    }
+    if (thousands > 0) {
+        result += convertGroup(thousands) + ' Thousand ';
+    }
+    if (remainder > 0) {
+        result += convertGroup(remainder);
+    }
+    
+    if (result.trim() === '') {
+        result = 'Zero';
+    }
+    
+    if (decimalPart > 0) {
+        result += ' and ' + convertGroup(decimalPart) + ' Paisa';
+    } else {
+        // Ensure "only" is added if no cents
+        result += ' ';
+    }
+
+    return result.trim().replace(/\s+/g, ' '); // Clean up multiple spaces
+}
+
 
 // Loading state utility functions
 function showLoading(element) {
