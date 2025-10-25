@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BILLA TRADERS - Professional Invoice System</title>
+    <title>MNR INVOBILL - Professional Invoice System</title>
     <link rel="icon" type="image/png" href="favicon.png">
     <link rel="stylesheet" href="styles.css">
    
@@ -19,6 +19,7 @@
 <!-- Loading Screen -->
 <div id="loading-screen" class="loading-screen">
     <div class="loading-content">
+        <h2 id="loading-app-name">MNR INVOBILL</h2>
         <div class="loader"></div>
     </div>
 </div>
@@ -28,16 +29,16 @@
     <header class="header">
         <div class="header-content">
             <div class="logo-header">
-        <img src="favicon.png" alt="BILLA TRADERS Logo" class="header-logo">
+        <img src="favicon.png" alt="MNR INVOBILL Logo" class="header-logo">
         <div class="logo-text">
-            <h1>BILLA TRADERS</h1>
+            <h1 class="app-name-display">MNR INVOBILL</h1>
         </div>
          </div>
             <nav>
                 <button id="dashboard-nav" class="nav-btn active">Dashboard</button>
                 <button id="create-invoice-nav" class="nav-btn">Create Invoice</button>
-                <button id="invoices-list-nav" class="nav-btn">All Invoices</button>
-                <button id="stock-management-nav" class="nav-btn">Stock Management</button>
+                <button id="invoices-list-nav" class="nav-btn">Invoices</button>
+                <button id="stock-management-nav" class="nav-btn">Stock</button>
                 <button id="customers-nav" class="nav-btn">Customers</button>
                 <button id="settings-nav" class="nav-btn">Settings</button>
                 <button id="logout-btn" class="switch-logout-btn" title="Logout">
@@ -73,7 +74,7 @@
         </div>
         
         <div class="recent-invoices">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <div class="recent-invoices-header">
                 <h3>Recent Invoices</h3>
                 <button id="view-all-invoices" class="btn-secondary">View All Invoices</button>
             </div>
@@ -89,16 +90,16 @@
     <header class="header">
         <div class="header-content">
               <div class="logo-header">
-        <img src="favicon.png" alt="BILLA TRADERS Logo" class="header-logo">
+        <img src="favicon.png" alt="MNR INVOBILL Logo" class="header-logo">
         <div class="logo-text">
-            <h1>BILLA TRADERS</h1>
+            <h1 class="app-name-display">MNR INVOBILL</h1>
         </div>
          </div>
             <nav>
                 <button id="dashboard-nav-2" class="nav-btn">Dashboard</button>
                 <button id="create-invoice-nav-2" class="nav-btn active">Create Invoice</button>
-                <button id="invoices-list-nav-2" class="nav-btn">All Invoices</button>
-                <button id="stock-management-nav-2" class="nav-btn">Stock Management</button>
+                <button id="invoices-list-nav-2" class="nav-btn">Invoices</button>
+                <button id="stock-management-nav-2" class="nav-btn">Stock</button>
                 <button id="customers-nav-2" class="nav-btn">Customers</button>
                 <button id="settings-nav-2" class="nav-btn">Settings</button>
                 <button id="logout-btn-2" class="switch-logout-btn" title="Logout">
@@ -124,18 +125,16 @@
                     <div class="form-row">
                         <div class="form-group">
                             <label for="customer-name">Customer Name *</label>
-                            <input type="text" id="customer-name" required aria-required="true" autocomplete="off">
-                            <!-- New: Customer search results container -->
-                            <div id="customer-search-results" class="product-search-results" style="display: none;"></div>
+                            <input type="text" id="customer-name" required aria-required="true" autocomplete="name">
                         </div>
                         <div class="form-group">
                             <label for="customer-mobile">Mobile Number *</label>
-                            <input type="tel" id="customer-mobile" required aria-required="true">
+                            <input type="tel" id="customer-mobile" required aria-required="true" autocomplete="tel">
                         </div>
                     </div>
-                    <div class="form-group" style="grid-column: 1 / -1;">
+                    <div class="form-group">
                         <label for="customer-address">Address</label>
-                        <textarea id="customer-address" rows="3" placeholder="Enter customer address..."></textarea>
+                        <textarea id="customer-address" rows="3" autocomplete="street-address"></textarea>
                     </div>
                 </div>
                 
@@ -185,16 +184,16 @@
     <header class="header">
         <div class="header-content">
                <div class="logo-header">
-        <img src="favicon.png" alt="BILLA TRADERS Logo" class="header-logo">
+        <img src="favicon.png" alt="MNR INVOBILL Logo" class="header-logo">
         <div class="logo-text">
-            <h1>BILLA TRADERS</h1>
+            <h1 class="app-name-display">MNR INVOBILL</h1>
         </div>
          </div>
             <nav>
                 <button id="dashboard-nav-3" class="nav-btn">Dashboard</button>
                 <button id="create-invoice-nav-3" class="nav-btn">Create Invoice</button>
-                <button id="invoices-list-nav-3" class="nav-btn active">All Invoices</button>
-                <button id="stock-management-nav-3" class="nav-btn">Stock Management</button>
+                <button id="invoices-list-nav-3" class="nav-btn active">Invoices</button>
+                <button id="stock-management-nav-3" class="nav-btn">Stock</button>
                 <button id="customers-nav-3" class="nav-btn">Customers</button>
                 <button id="settings-nav-3" class="nav-btn">Settings</button>
                 <button id="logout-btn-3" class="switch-logout-btn" title="Logout">
@@ -240,6 +239,138 @@
         </div>
     </main>
 </div>
+
+<!-- Customers Page (New) -->
+<div id="customers-page" class="page">
+    <header class="header">
+        <div class="header-content">
+               <div class="logo-header">
+        <img src="favicon.png" alt="MNR INVOBILL Logo" class="header-logo">
+        <div class="logo-text">
+            <h1 class="app-name-display">MNR INVOBILL</h1>
+        </div>
+         </div>
+            <nav>
+                <button id="dashboard-nav-5" class="nav-btn">Dashboard</button>
+                <button id="create-invoice-nav-5" class="nav-btn">Create Invoice</button>
+                <button id="invoices-list-nav-5" class="nav-btn">Invoices</button>
+                <button id="stock-management-nav-5" class="nav-btn">Stock</button>
+                <button id="customers-nav-5" class="nav-btn active">Customers</button>
+                <button id="settings-nav-5" class="nav-btn">Settings</button>
+                <button id="logout-btn-5" class="switch-logout-btn" title="Logout">
+                <img src="switch.png" alt="Logout">
+                </button>
+            </nav>
+        </div>
+    </header>
+    
+    <main class="main-content">
+        <div class="customers-header">
+            <h2>Customer Management</h2>
+            <div class="customer-actions">
+                <button id="add-customer-btn" class="btn-primary">+ Add New Customer</button>
+                <input type="text" id="search-customers" placeholder="Search customers..." class="search-input">
+                <button id="refresh-customers" class="btn-secondary">Refresh</button>
+            </div>
+        </div>
+        
+        <div class="customers-table-container">
+            <table id="customers-table" class="invoices-table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Mobile</th>
+                        <th>Address</th>
+                        <th>Total Invoices</th>
+                        <th>Last Activity</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="customers-table-body">
+                    <tr>
+                        <td colspan="6" class="no-customers-found">Loading customers...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
+</div>
+
+<!-- Settings Page (New) -->
+<div id="settings-page" class="page">
+    <header class="header">
+        <div class="header-content">
+               <div class="logo-header">
+        <img src="favicon.png" alt="MNR INVOBILL Logo" class="header-logo">
+        <div class="logo-text">
+            <h1 class="app-name-display">MNR INVOBILL</h1>
+        </div>
+         </div>
+            <nav>
+                <button id="dashboard-nav-6" class="nav-btn">Dashboard</button>
+                <button id="create-invoice-nav-6" class="nav-btn">Create Invoice</button>
+                <button id="invoices-list-nav-6" class="nav-btn">Invoices</button>
+                <button id="stock-management-nav-6" class="nav-btn">Stock</button>
+                <button id="customers-nav-6" class="nav-btn">Customers</button>
+                <button id="settings-nav-6" class="nav-btn active">Settings</button>
+                <button id="logout-btn-6" class="switch-logout-btn" title="Logout">
+                <img src="switch.png" alt="Logout">
+                </button>
+            </nav>
+        </div>
+    </header>
+    
+    <main class="main-content">
+        <div class="settings-header">
+            <h2>Business Settings</h2>
+        </div>
+        
+        <form id="settings-form" class="invoice-form">
+            <div class="settings-section">
+                <h3>Company Details</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="settings-business-name">Business Name *</label>
+                        <input type="text" id="settings-business-name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="settings-gstin">GSTIN</label>
+                        <input type="text" id="settings-gstin" placeholder="Optional GST Identification Number">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="settings-address">Business Address *</label>
+                    <textarea id="settings-address" rows="3" required></textarea>
+                </div>
+            </div>
+            
+            <div class="settings-section">
+                <h3>Financial & Legal</h3>
+                <div class="form-row">
+                     <div class="form-group">
+                        <label for="settings-pan">PAN</label>
+                        <input type="text" id="settings-pan" placeholder="Optional Permanent Account Number">
+                    </div>
+                    <div class="form-group">
+                        <label for="settings-bank-details">Bank Details (for EFT)</label>
+                        <input type="text" id="settings-bank-details" placeholder="Account Name, Number, IFSC">
+                    </div>
+                </div>
+                 <div class="form-group">
+                    <label for="settings-terms">Invoice Terms & Conditions / Notes</label>
+                    <textarea id="settings-terms" rows="4" placeholder="e.g., Payment due within 7 days, Goods once sold..."></textarea>
+                </div>
+            </div>
+            
+            <div class="form-actions">
+                <button type="submit" id="save-settings-btn" class="btn-primary">Save All Settings</button>
+                <p id="settings-message" class="message hidden"></p>
+            </div>
+        </form>
+    </main>
+</div>
+
+<!-- Modals (Remain as-is) -->
 
 <!-- Delete Confirmation Modal -->
 <div id="delete-confirm-modal" class="modal hidden">
@@ -300,9 +431,9 @@
                             <input type="tel" id="edit-customer-mobile" required aria-required="true">
                         </div>
                     </div>
-                    <div class="form-group" style="grid-column: 1 / -1;">
+                    <div class="form-group">
                         <label for="edit-customer-address">Address</label>
-                        <textarea id="edit-customer-address" rows="3" placeholder="Enter customer address..."></textarea>
+                        <textarea id="edit-customer-address" rows="3"></textarea>
                     </div>
                 </div>
                 
@@ -342,16 +473,16 @@
     <header class="header">
         <div class="header-content">
                <div class="logo-header">
-        <img src="favicon.png" alt="BILLA TRADERS Logo" class="header-logo">
+        <img src="favicon.png" alt="MNR INVOBILL Logo" class="header-logo">
         <div class="logo-text">
-            <h1>BILLA TRADERS</h1>
+            <h1 class="app-name-display">MNR INVOBILL</h1>
         </div>
          </div>
             <nav>
                 <button id="dashboard-nav-4" class="nav-btn">Dashboard</button>
                 <button id="create-invoice-nav-4" class="nav-btn">Create Invoice</button>
-                <button id="invoices-list-nav-4" class="nav-btn">All Invoices</button>
-                <button id="stock-management-nav" class="nav-btn active">Stock Management</button>
+                <button id="invoices-list-nav-4" class="nav-btn">Invoices</button>
+                <button id="stock-management-nav" class="nav-btn active">Stock</button>
                 <button id="customers-nav-4" class="nav-btn">Customers</button>
                 <button id="settings-nav-4" class="nav-btn">Settings</button>
                 <button id="logout-btn-4" class="switch-logout-btn" title="Logout">
@@ -394,154 +525,6 @@
         </div>
     </main>
 </div>
-
-<!-- Customers Page -->
-<div id="customers-page" class="page">
-    <header class="header">
-        <div class="header-content">
-            <div class="logo-header">
-                <img src="favicon.png" alt="BILLA TRADERS Logo" class="header-logo">
-                <div class="logo-text"><h1>BILLA TRADERS</h1></div>
-            </div>
-            <nav>
-                <button id="dashboard-nav-5" class="nav-btn">Dashboard</button>
-                <button id="create-invoice-nav-5" class="nav-btn">Create Invoice</button>
-                <button id="invoices-list-nav-5" class="nav-btn">All Invoices</button>
-                <button id="stock-management-nav-5" class="nav-btn">Stock Management</button>
-                <button id="customers-nav-5" class="nav-btn active">Customers</button>
-                <button id="settings-nav-5" class="nav-btn">Settings</button>
-                <button id="logout-btn-5" class="switch-logout-btn" title="Logout">
-                <img src="switch.png" alt="Logout">
-                </button>
-            </nav>
-        </div>
-    </header>
-    
-    <main class="main-content">
-        <div class="customers-header">
-            <h2>Customer Management</h2>
-            <div class="customer-actions">
-                <button id="add-customer-btn" class="btn-primary">+ Add New Customer</button>
-                <input type="text" id="search-customers" placeholder="Search customers..." class="search-input">
-            </div>
-        </div>
-        
-        <div class="customers-table-container">
-            <table id="customers-table" class="invoices-table">
-                <thead>
-                    <tr>
-                        <th style="width: 30%;">Name</th>
-                        <th style="width: 20%;">Mobile</th>
-                        <th style="width: 40%;">Address</th>
-                        <th style="width: 10%;">Actions</th>
-                    </tr>
-                </thead>
-                <tbody id="customers-table-body">
-                    <tr><td colspan="4" class="loading-invoices">Loading customers...</td></tr>
-                </tbody>
-            </table>
-        </div>
-    </main>
-</div>
-
-<!-- Settings Page -->
-<div id="settings-page" class="page">
-    <header class="header">
-        <div class="header-content">
-            <div class="logo-header">
-                <img src="favicon.png" alt="BILLA TRADERS Logo" class="header-logo">
-                <div class="logo-text"><h1>BILLA TRADERS</h1></div>
-            </div>
-            <nav>
-                <button id="dashboard-nav-6" class="nav-btn">Dashboard</button>
-                <button id="create-invoice-nav-6" class="nav-btn">Create Invoice</button>
-                <button id="invoices-list-nav-6" class="nav-btn">All Invoices</button>
-                <button id="stock-management-nav-6" class="nav-btn">Stock Management</button>
-                <button id="customers-nav-6" class="nav-btn">Customers</button>
-                <button id="settings-nav-6" class="nav-btn active">Settings</button>
-                <button id="logout-btn-6" class="switch-logout-btn" title="Logout">
-                <img src="switch.png" alt="Logout">
-                </button>
-            </nav>
-        </div>
-    </header>
-    
-    <main class="main-content">
-        <h2>Business Settings & Customization</h2>
-        <form id="settings-form" class="invoice-form">
-            <div class="settings-section">
-                <h3>Business Details for Invoicing</h3>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="setting-business-name">Business Name *</label>
-                        <input type="text" id="setting-business-name" required value="BILLA TRADERS">
-                    </div>
-                    <div class="form-group">
-                        <label for="setting-gstin">GSTIN</label>
-                        <input type="text" id="setting-gstin" placeholder="Enter GSTIN number">
-                    </div>
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="setting-pan">PAN Number</label>
-                        <input type="text" id="setting-pan" placeholder="Enter PAN number">
-                    </div>
-                    <div class="form-group">
-                        <label for="setting-bank-details">Bank Details (for EFT)</label>
-                        <textarea id="setting-bank-details" rows="3" placeholder="Bank Name, A/C No., IFSC Code"></textarea>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label for="setting-address">Primary Address (Printed on Invoice)</label>
-                    <textarea id="setting-address" rows="3" required>DICHPALLY RS, HYD-NZB ROAD, NIZAMABAD TELANGANA 503175</textarea>
-                </div>
-            </div>
-            
-            <div class="settings-section">
-                <h3>Invoice Defaults & Terms</h3>
-                <div class="form-group">
-                    <label for="setting-terms">Terms & Conditions (Printed on Invoice Footer)</label>
-                    <textarea id="setting-terms" rows="4" required>1. Goods once sold cannot be taken back. 2. Payment due within 30 days. 3. Disputes subject to Nizamabad jurisdiction.</textarea>
-                </div>
-            </div>
-            
-            <div class="form-actions">
-                <button type="submit" id="save-settings-btn" class="btn-primary">Save Settings</button>
-            </div>
-        </form>
-    </main>
-</div>
-
-<!-- Add/Edit Customer Modal (Placeholder) -->
-<div id="customer-modal" class="modal hidden">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h2 id="customer-modal-title">Add New Customer</h2>
-            <button id="close-customer-modal" class="close-btn">&times;</button>
-        </div>
-        <div class="modal-body">
-            <form id="customer-form" class="invoice-form">
-                <div class="form-group">
-                    <label for="customer-modal-name">Name *</label>
-                    <input type="text" id="customer-modal-name" required>
-                </div>
-                <div class="form-group">
-                    <label for="customer-modal-mobile">Mobile *</label>
-                    <input type="tel" id="customer-modal-mobile" required>
-                </div>
-                <div class="form-group">
-                    <label for="customer-modal-address">Address</label>
-                    <textarea id="customer-modal-address" rows="3"></textarea>
-                </div>
-            </form>
-        </div>
-        <div class="modal-footer">
-            <button id="save-customer-btn" class="btn-primary">Save Customer</button>
-            <button id="cancel-customer-btn" class="btn-secondary">Cancel</button>
-        </div>
-    </div>
-</div>
-
 
 <!-- Add/Edit Product Modal -->
 <div id="product-modal" class="modal hidden">
