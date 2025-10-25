@@ -21,6 +21,7 @@ function getDb() {
 
 // Sequential Invoice Number Generation - No Special Permissions Needed
 let currentYear = new Date().getFullYear();
+let availableCustomers = []; // Global list of customers for auto-fill
 
 // Global message display function (if not defined elsewhere)
 function showMessage(message, type) {
@@ -43,7 +44,7 @@ function showMessage(message, type) {
     } else {
         // Fallback: use alert for errors
         if (type === 'error') {
-            alert(`Error: ${message}`);
+            console.error(`Error: ${message}`);
         }
     }
 }
@@ -66,14 +67,18 @@ async function getNextInvoiceNumber() {
         // Get the latest invoice to determine next number
         const snapshot = await db.collection('invoices')
             .where('createdBy', '==', user.uid)
-            .orderBy('createdAt', 'desc')
-            .limit(1)
-            .get();
-
-        let nextNumber = 1;
+            .get(); // Fetch all and sort client-side to avoid index requirement
         
+        let nextNumber = 1;
+
         if (!snapshot.empty) {
-            const lastInvoice = snapshot.docs[0].data();
+            const invoices = [];
+            snapshot.forEach(doc => invoices.push(doc.data()));
+
+            // Sort by createdAt client-side (descending)
+            invoices.sort((a, b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0));
+
+            const lastInvoice = invoices[0];
             const lastInvoiceNumber = lastInvoice.invoiceNumber;
             
             // Extract number from format: INV-YY-XXXX
@@ -82,10 +87,7 @@ async function getNextInvoiceNumber() {
                 nextNumber = parseInt(match[1]) + 1;
             } else {
                 // Fallback: count total invoices
-                const countSnapshot = await db.collection('invoices')
-                    .where('createdBy', '==', user.uid)
-                    .get();
-                nextNumber = countSnapshot.size + 1;
+                nextNumber = invoices.length + 1;
             }
         }
         
@@ -103,8 +105,8 @@ async function getNextInvoiceNumber() {
 function generateFallbackInvoiceNumber() {
     const timestamp = Date.now();
     const year = currentYear.toString().slice(-2);
-    const random = Math.floor(Math.random() * 90) + 10; // 10-99 for some randomness
-    return `INV-${year}-${random.toString().padStart(4, '0')}`;
+    const random = Math.floor(Math.random() * 9000) + 1000; // 1000-9999
+    return `INV-${year}-${random.toString()}`;
 }
 
 // Display next available invoice number
@@ -125,9 +127,108 @@ async function displayNextInvoiceNumber() {
     } catch (error) {
         console.error('Error displaying next invoice number:', error);
         // Don't show error to user, just show loading
-        invoiceHeader.innerHTML = `Create New Invoice <small class="invoice-number-preview">Next: Loading...</small>`;
+        invoiceHeader.innerHTML = `Create New Invoice <small class="invoice-number-preview">Next: Error...</small>`;
     }
 }
+
+// ----------------------------------------------------
+// Customer Management and Auto-fill
+// ----------------------------------------------------
+
+async function loadAvailableCustomers() {
+    const user = getAuth().currentUser;
+    if (!user) return;
+
+    try {
+        const querySnapshot = await getDb().collection('customers')
+            .where('createdBy', '==', user.uid)
+            .get();
+            
+        availableCustomers = [];
+        querySnapshot.forEach((doc) => {
+            availableCustomers.push({
+                id: doc.id,
+                ...doc.data()
+            });
+        });
+        console.log(`Loaded ${availableCustomers.length} available customers for auto-fill.`);
+    } catch (error) {
+        console.error('Error loading customers for auto-fill:', error);
+    }
+}
+
+function initCustomerSearch() {
+    const nameInput = document.getElementById('customer-name');
+    const mobileInput = document.getElementById('customer-mobile');
+    const addressInput = document.getElementById('customer-address');
+    const searchResults = document.getElementById('customer-search-results');
+
+    if (!nameInput || !searchResults) return;
+
+    const performSearch = debounce(function(e) {
+        const searchTerm = e.target.value.trim().toLowerCase();
+        
+        if (searchTerm.length < 2) {
+            searchResults.style.display = 'none';
+            return;
+        }
+
+        const filteredCustomers = availableCustomers.filter(customer => 
+            customer.name.toLowerCase().includes(searchTerm) ||
+            customer.mobile.includes(searchTerm)
+        );
+
+        displayCustomerSearchResults(filteredCustomers, searchResults);
+    }, 300);
+
+    nameInput.addEventListener('input', performSearch);
+    mobileInput.addEventListener('input', performSearch); // Also search by mobile
+
+    // Handle clicking outside to close results
+    document.addEventListener('click', function(e) {
+        if (!nameInput.contains(e.target) && !mobileInput.contains(e.target) && !searchResults.contains(e.target)) {
+            searchResults.style.display = 'none';
+        }
+    });
+}
+
+function displayCustomerSearchResults(customers, resultsContainer) {
+    if (customers.length === 0) {
+        resultsContainer.innerHTML = '<div class="product-search-item">No matching customers found.</div>';
+    } else {
+        resultsContainer.innerHTML = customers.map(customer => `
+            <div class="product-search-item customer-search-item" 
+                 data-name="${customer.name}" 
+                 data-mobile="${customer.mobile}" 
+                 data-address="${customer.address}">
+                <span class="product-search-name">${customer.name}</span>
+                <span class="product-search-price">${customer.mobile}</span>
+            </div>
+        `).join('');
+
+        // Add click event listeners
+        resultsContainer.querySelectorAll('.customer-search-item').forEach(item => {
+            item.addEventListener('click', function() {
+                const name = this.getAttribute('data-name');
+                const mobile = this.getAttribute('data-mobile');
+                const address = this.getAttribute('data-address');
+                
+                // Fill form fields
+                document.getElementById('customer-name').value = name;
+                document.getElementById('customer-mobile').value = mobile;
+                document.getElementById('customer-address').value = address;
+                
+                resultsContainer.style.display = 'none';
+            });
+        });
+    }
+
+    resultsContainer.style.display = 'block';
+}
+
+// ----------------------------------------------------
+// Invoice Form Functionality
+// ----------------------------------------------------
 
 // Initialize invoice form functionality
 function initInvoiceForm() {
@@ -154,22 +255,23 @@ function initInvoiceForm() {
     
     // Initialize product search
     initProductSearch();
+
+    // Initialize customer search (New)
+    initCustomerSearch();
     
     // Initialize with one product row
-    addProductRow();
+    if (productsContainer.children.length === 0) {
+        addProductRow();
+    }
     
     // Display next invoice number
     displayNextInvoiceNumber();
     
     // Load available products for search - This is crucial
     loadAvailableProducts();
-    
-    // Also load products when the page becomes visible
-    document.addEventListener('visibilitychange', function() {
-        if (!document.hidden && document.getElementById('invoice-page').classList.contains('active')) {
-            loadAvailableProducts();
-        }
-    });
+
+    // Load available customers for search (New)
+    loadAvailableCustomers();
 }
 
 // Add a new product row to the invoice form
@@ -212,7 +314,7 @@ function addProductRow() {
             productRow.remove();
             calculateTotals();
         } else {
-            alert('Invoice must have at least one product.');
+            showMessage('Invoice must have at least one product.', 'error');
         }
     });
     
@@ -285,10 +387,10 @@ async function saveInvoice(e) {
     // Get customer details
     const customerName = document.getElementById('customer-name').value;
     const customerMobile = document.getElementById('customer-mobile').value;
-    const customerAddress = document.getElementById('customer-address').value;
+    const customerAddress = document.getElementById('customer-address').value; // New Address Field
     
     if (!customerName || !customerMobile) {
-        showMessage('Please fill in customer details', 'error');
+        showMessage('Please fill in customer Name and Mobile.', 'error');
         return;
     }
     
@@ -332,7 +434,7 @@ async function saveInvoice(e) {
         invoiceNumber: invoiceNumber,
         customerName: customerName,
         customerMobile: customerMobile,
-        customerAddress: customerAddress, // NEW FIELD
+        customerAddress: customerAddress, // New Address Field
         products: products,
         subtotal: subtotal,
         gstAmount: gstAmount,
@@ -342,12 +444,19 @@ async function saveInvoice(e) {
         status: 'active'
     };
     
+    // Save button loading state
+    const saveBtn = e.target.querySelector('button[type="submit"]');
+    if (saveBtn) showLoading(saveBtn);
+
     try {
         // Save to Firestore
         const docRef = await db.collection('invoices').add(invoice);
         
         // Update stock levels
         await updateProductStock(products);
+
+        // Save/update customer record for auto-fill (optional)
+        await saveCustomerRecord(customerName, customerMobile, customerAddress, user.uid);
         
         showMessage(`Invoice ${invoiceNumber} saved successfully!`, 'success');
         resetInvoiceForm();
@@ -363,8 +472,55 @@ async function saveInvoice(e) {
         }, 2000);
     } catch (error) {
         showMessage('Error saving invoice: ' + error.message, 'error');
+    } finally {
+        if (saveBtn) hideLoading(saveBtn);
     }
 }
+
+// Function to save/update customer in the 'customers' collection
+async function saveCustomerRecord(name, mobile, address, userId) {
+    try {
+        const db = getDb();
+        const user = getAuth().currentUser;
+
+        // Try to find an existing customer by mobile
+        const existingCustomerSnapshot = await db.collection('customers')
+            .where('mobile', '==', mobile)
+            .where('createdBy', '==', userId)
+            .limit(1)
+            .get();
+
+        const customerData = {
+            name: name,
+            mobile: mobile,
+            address: address,
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+            createdBy: userId
+        };
+
+        if (!existingCustomerSnapshot.empty) {
+            // Update existing record
+            const docId = existingCustomerSnapshot.docs[0].id;
+            await db.collection('customers').doc(docId).update(customerData);
+            console.log('Existing customer record updated.');
+        } else {
+            // Create new record
+            customerData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+            await db.collection('customers').add(customerData);
+            console.log('New customer record created.');
+        }
+        
+        // Refresh customer list cache for auto-fill
+        if (typeof loadAvailableCustomers === 'function') {
+            loadAvailableCustomers();
+        }
+
+    } catch (error) {
+        console.error('Error saving customer record:', error);
+        // Do not show an error message for failed customer save as it shouldn't block invoice creation
+    }
+}
+
 
 // Reset invoice form
 function resetInvoiceForm() {
@@ -392,362 +548,12 @@ function resetInvoiceForm() {
     // Reset totals
     calculateTotals();
     
-    // Reset address field
-    document.getElementById('customer-address').value = '';
+    // Clear customer search results container
+    const searchResults = document.getElementById('customer-search-results');
+    if (searchResults) {
+        searchResults.style.display = 'none';
+    }
 }
-
-// Load recent invoices for dashboard
-function loadDashboardRecentInvoices() {
-    // Use safe auth access
-    let user;
-    try {
-        user = getAuth().currentUser;
-    } catch (error) {
-        console.log('Auth not ready yet');
-        return;
-    }
-    
-    if (!user) {
-        console.log('No user logged in for recent invoices');
-        const invoicesList = document.getElementById('invoices-list');
-        if (invoicesList) {
-            invoicesList.innerHTML = '<p>Please log in to view invoices</p>';
-        }
-        return;
-    }
-
-    const invoicesList = document.getElementById('invoices-list');
-    if (!invoicesList) {
-        console.log('Invoices list element not found');
-        return;
-    }
-
-    invoicesList.innerHTML = '<p>Loading invoices...</p>';
-
-    console.log('Loading recent invoices for user:', user.uid);
-
-    // Use safe db access
-    let dbInstance;
-    try {
-        dbInstance = getDb();
-    } catch (error) {
-        console.error('Database not available:', error);
-        invoicesList.innerHTML = '<p class="error">Database connection error</p>';
-        return;
-    }
-
-    dbInstance.collection('invoices')
-        .where('createdBy', '==', user.uid)
-        .orderBy('createdAt', 'desc')
-        .limit(10)
-        .get()
-        .then((querySnapshot) => {
-            invoicesList.innerHTML = '';
-            
-            if (querySnapshot.empty) {
-                invoicesList.innerHTML = '<p class="no-invoices">No invoices found. Create your first invoice!</p>';
-                return;
-            }
-
-            const invoices = [];
-            querySnapshot.forEach((doc) => {
-                invoices.push({
-                    id: doc.id,
-                    ...doc.data()
-                });
-            });
-
-            console.log(`Loaded ${invoices.length} recent invoices`);
-
-            invoices.forEach((invoice) => {
-                const invoiceDate = invoice.createdAt ? 
-                    invoice.createdAt.toDate().toLocaleDateString() : 'Date not available';
-                
-                const invoiceItem = document.createElement('div');
-                invoiceItem.className = 'invoice-item';
-                invoiceItem.innerHTML = `
-                    <div class="invoice-customer">${invoice.customerName}</div>
-                    <div class="invoice-mobile">${invoice.customerMobile}</div>
-                    <div class="invoice-date">${invoiceDate}</div>
-                    <div class="invoice-amount">₹${invoice.grandTotal.toFixed(2)}</div>
-                    <div class="invoice-actions">
-                        <button class="btn-secondary view-invoice-btn" data-id="${invoice.id}">View</button>
-                    </div>
-                `;
-                
-                invoicesList.appendChild(invoiceItem);
-            });
-
-            // Add event listeners to view buttons
-            document.querySelectorAll('.view-invoice-btn').forEach(button => {
-                button.addEventListener('click', function() {
-                    const invoiceId = this.getAttribute('data-id');
-                    viewInvoice(invoiceId);
-                });
-            });
-        })
-        .catch((error) => {
-            console.error('Error loading recent invoices:', error);
-            invoicesList.innerHTML = '<p class="error">Error loading invoices</p>';
-            
-            // Don't show error message for permission issues when collection doesn't exist yet
-            if (error.code !== 'failed-precondition' && error.code !== 'permission-denied') {
-                showMessage('Error loading invoices: ' + error.message, 'error');
-            }
-        });
-}
-
-// View invoice details
-function viewInvoice(invoiceId) {
-    db.collection('invoices').doc(invoiceId).get()
-        .then((doc) => {
-            if (doc.exists) {
-                generateInvoicePreview(doc.data(), doc.id);
-                document.getElementById('invoice-preview-modal').classList.remove('hidden');
-            } else {
-                showMessage('Invoice not found', 'error');
-            }
-        })
-        .catch((error) => {
-            showMessage('Error loading invoice: ' + error.message, 'error');
-        });
-}
-
-// Print invoice
-function printInvoice(invoiceId) {
-    db.collection('invoices').doc(invoiceId).get()
-        .then((doc) => {
-            if (doc.exists) {
-                generateInvoicePreview(doc.data(), doc.id);
-                
-                // Wait for the preview to render, then print
-                setTimeout(() => {
-                    window.print();
-                }, 500);
-            } else {
-                showMessage('Invoice not found', 'error');
-            }
-        })
-        .catch((error) => {
-            showMessage('Error loading invoice: ' + error.message, 'error');
-        });
-}
-
-// Generate clean professional invoice preview
-function generateInvoicePreview(invoice, invoiceId, isPreview = false) {
-    const previewContent = document.getElementById('invoice-preview-content');
-    if (!previewContent) return;
-    
-    // Format date
-    let invoiceDate;
-    if (invoice.createdAt) {
-        if (typeof invoice.createdAt.toDate === 'function') {
-            invoiceDate = invoice.createdAt.toDate().toLocaleDateString() || 'N/A';
-        } else {
-            invoiceDate = new Date(invoice.createdAt).toLocaleDateString() || 'N/A';
-        }
-    } else {
-        invoiceDate = new Date().toLocaleDateString();
-    }
-    
-    // Handle Address display
-    const customerAddressHtml = invoice.customerAddress ? 
-        invoice.customerAddress.replace(/\n/g, '<br>') : 
-        'N/A';
-    
-    // Use invoice number if available, otherwise use ID
-    const displayInvoiceNumber = invoice.invoiceNumber || invoiceId;
-    
-    // Generate products table rows
-    let productsRows = '';
-    if (invoice.products && invoice.products.length > 0) {
-        invoice.products.forEach((product, index) => {
-            // Calculate GST amounts for display
-            // NOTE: Assuming `product.price` already includes GST and `product.total` is total price including GST for the line item.
-            const unitPriceInclGst = product.price; // This is the input unit price from the form
-            const priceNoGst = unitPriceInclGst / (1 + (product.gst / 100));
-            const gstAmountPerUnit = unitPriceInclGst - priceNoGst;
-            
-            const subtotalNoGst = priceNoGst * product.quantity;
-            const totalGst = gstAmountPerUnit * product.quantity;
-
-            productsRows += `
-                <tr>
-                    <td>${index + 1}</td>
-                    <td class="product-name-cell">${product.name}</td>
-                    <td class="qty-cell">${product.quantity}</td>
-                    <td class="price-cell">₹${priceNoGst.toFixed(2)}</td>
-                    <td class="gst-cell">${product.gst}%</td>
-                    <td class="gst-amount-cell">₹${totalGst.toFixed(2)}</td>
-                    <td class="total-cell">₹${(subtotalNoGst + totalGst).toFixed(2)}</td>
-                </tr>
-            `;
-        });
-    }
-
-    // Convert total to words (Simple conversion for demonstration)
-    const grandTotalInWords = convertNumberToWords(invoice.grandTotal.toFixed(2));
-    
-    previewContent.innerHTML = `
-        <div class="invoice-paper-template">
-            <!-- Professional Header -->
-            <div class="invoice-header-print">
-                <div class="company-logo-section">
-                    <!-- Placeholder for Company Logo -->
-                    <!-- <img src="logo.png" alt="BILLA TRADERS Logo" class="invoice-logo"> -->
-                    <div class="company-name-print">BILLA TRADERS</div>
-                </div>
-                <div class="company-address-section">
-                    <p class="company-address">DICHPALLY RS, HYD-NZB ROAD, NIZAMABAD TELANGANA 503175</p>
-                    <!-- Add professional details -->
-                    <p class="company-details">GSTIN: *XXXXXXXXXXXXXXX* | PAN: *ABCDE1234F*</p>
-                </div>
-            </div>
-            
-            <div class="document-title">TAX INVOICE</div>
-
-            <!-- Invoice and Customer Details -->
-            <div class="details-section">
-                <div class="bill-to-info">
-                    <h4>Bill To:</h4>
-                    <p><strong>${invoice.customerName}</strong></p>
-                    <p>Mobile: ${invoice.customerMobile}</p>
-                    <p>Address: ${customerAddressHtml}</p>
-                </div>
-                <div class="invoice-meta-info">
-                    <div class="meta-row"><strong>Invoice No:</strong> <span>${displayInvoiceNumber}</span></div>
-                    <div class="meta-row"><strong>Date:</strong> <span>${invoiceDate}</span></div>
-                    <div class="meta-row"><strong>Status:</strong> <span>${invoice.status}</span></div>
-                    <div class="meta-row"><strong>Payment:</strong> <span>Pending/Cash</span></div>
-                </div>
-            </div>
-            
-            <!-- Products Table -->
-            <table class="products-table-print">
-                <thead>
-                    <tr>
-                        <th style="width: 5%;">#</th>
-                        <th style="width: 35%;">Product/Service</th>
-                        <th style="width: 10%;">Qty</th>
-                        <th style="width: 15%;">Unit Price (Excl. GST)</th>
-                        <th style="width: 10%;">GST %</th>
-                        <th style="width: 15%;">GST Amount</th>
-                        <th style="width: 10%;">Total (Incl. GST)</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${productsRows}
-                </tbody>
-            </table>
-            
-            <!-- Totals and Signature Section -->
-            <div class="summary-section">
-                <div class="amount-in-words">
-                    <p><strong>Amount in Words:</strong> Rupees ${grandTotalInWords} only</p>
-                </div>
-                <div class="totals-preview-print">
-                    <div class="totals-row">
-                        <span class="label">Subtotal (Excl. GST):</span>
-                        <span class="value">₹${(invoice.grandTotal - invoice.gstAmount).toFixed(2)}</span>
-                    </div>
-                    <div class="totals-row">
-                        <span class="label">Total GST:</span>
-                        <span class="value">₹${invoice.gstAmount.toFixed(2)}</span>
-                    </div>
-                    <div class="totals-row grand-total-row">
-                        <span class="label">Grand Total:</span>
-                        <span class="value">₹${invoice.grandTotal.toFixed(2)}</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Footer and Signature -->
-            <div class="invoice-footer-print">
-                <div class="terms-conditions">
-                    <p><strong>Terms & Conditions:</strong></p>
-                    <p>1. Goods once sold cannot be taken back. 2. Payment due within 30 days. 3. Disputes subject to Nizamabad jurisdiction.</p>
-                </div>
-                <div class="signature-section">
-                    <p>For BILLA TRADERS</p>
-                    <div class="signature-line"></div>
-                    <p>(Authorized Signatory)</p>
-                </div>
-            </div>
-        </div>
-    `;
-}
-
-// Simple function to convert number to words for invoice aesthetic
-function convertNumberToWords(amount) {
-    if (typeof amount === 'string') {
-        amount = parseFloat(amount);
-    }
-    if (isNaN(amount) || amount === 0) {
-        return "Zero";
-    }
-    
-    const units = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine'];
-    const teens = ['Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'];
-    const tens = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
-
-    function convertGroup(n) {
-        let output = '';
-        if (n >= 100) {
-            output += units[Math.floor(n / 100)] + ' Hundred ';
-            n %= 100;
-        }
-        if (n >= 10 && n <= 19) {
-            output += teens[n - 10];
-        } else if (n >= 20) {
-            output += tens[Math.floor(n / 10)] + (n % 10 > 0 ? ' ' + units[n % 10] : '');
-        } else if (n > 0) {
-            output += units[n % 10];
-        }
-        return output.trim();
-    }
-
-    let wholePart = Math.floor(amount);
-    let decimalPart = Math.round((amount - wholePart) * 100);
-    let result = '';
-
-    let crores = Math.floor(wholePart / 10000000);
-    wholePart %= 10000000;
-
-    let lakhs = Math.floor(wholePart / 100000);
-    wholePart %= 100000;
-
-    let thousands = Math.floor(wholePart / 1000);
-    wholePart %= 1000;
-
-    let remainder = wholePart;
-    
-    if (crores > 0) {
-        result += convertGroup(crores) + ' Crore ';
-    }
-    if (lakhs > 0) {
-        result += convertGroup(lakhs) + ' Lakh ';
-    }
-    if (thousands > 0) {
-        result += convertGroup(thousands) + ' Thousand ';
-    }
-    if (remainder > 0) {
-        result += convertGroup(remainder);
-    }
-    
-    if (result.trim() === '') {
-        result = 'Zero';
-    }
-    
-    if (decimalPart > 0) {
-        result += ' and ' + convertGroup(decimalPart) + ' Paisa';
-    } else {
-        // Ensure "only" is added if no cents
-        result += ' ';
-    }
-
-    return result.trim().replace(/\s+/g, ' '); // Clean up multiple spaces
-}
-
 
 // Product search functionality for invoice form
 function initProductSearch() {
@@ -855,17 +661,20 @@ function loadAvailableProducts() {
 
     db.collection('products')
         .where('createdBy', '==', user.uid)
-        .where('stock', '>', 0) // Only products with stock
         .get()
         .then((querySnapshot) => {
+            // Filter client-side for stock > 0
             window.availableProducts = [];
             querySnapshot.forEach((doc) => {
-                window.availableProducts.push({
-                    id: doc.id,
-                    ...doc.data()
-                });
+                const product = doc.data();
+                if (product.stock > 0) {
+                    window.availableProducts.push({
+                        id: doc.id,
+                        ...product
+                    });
+                }
             });
-            console.log(`Loaded ${window.availableProducts.length} available products for search`);
+            console.log(`Loaded ${window.availableProducts.length} available products for search (in stock).`);
         })
         .catch((error) => {
             console.error('Error loading products for search:', error);
@@ -880,24 +689,38 @@ async function updateProductStock(products) {
     const batch = db.batch();
     
     for (const product of products) {
-        // Find the product in available products
-        const availableProduct = window.availableProducts.find(p => 
-            p.name === product.name && p.price === product.price && p.gst === product.gst
-        );
-        
-        if (availableProduct) {
-            const newStock = availableProduct.stock - product.quantity;
-            const productRef = db.collection('products').doc(availableProduct.id);
-            
-            if (newStock >= 0) {
-                batch.update(productRef, {
-                    stock: newStock,
-                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-                });
+        // Find the product in Firestore to get its current document reference and stock
+        try {
+            const productQuerySnapshot = await db.collection('products')
+                .where('createdBy', '==', user.uid)
+                .where('name', '==', product.name)
+                .where('price', '==', product.price)
+                .where('gst', '==', product.gst)
+                .limit(1)
+                .get();
+
+            if (!productQuerySnapshot.empty) {
+                const doc = productQuerySnapshot.docs[0];
+                const availableProduct = doc.data();
+                
+                const newStock = (availableProduct.stock || 0) - product.quantity;
+                const productRef = db.collection('products').doc(doc.id);
+                
+                if (newStock >= 0) {
+                    batch.update(productRef, {
+                        stock: newStock,
+                        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                } else {
+                    console.warn(`Insufficient stock for ${product.name}`);
+                    showMessage(`Warning: Insufficient stock for ${product.name}`, 'error');
+                }
             } else {
-                console.warn(`Insufficient stock for ${product.name}`);
-                showMessage(`Warning: Insufficient stock for ${product.name}`, 'error');
+                 console.warn(`Product not found in stock: ${product.name}`);
             }
+
+        } catch (error) {
+            console.error(`Error finding product ${product.name} for stock update:`, error);
         }
     }
     
@@ -905,34 +728,249 @@ async function updateProductStock(products) {
         await batch.commit();
         console.log('Stock levels updated successfully');
     } catch (error) {
-        console.error('Error updating stock levels:', error);
+        console.error('Error committing stock update batch:', error);
     }
 }
 
 // Make this function globally accessible
-window.loadAvailableProducts = function() {
-    const user = auth.currentUser;
-    if (!user) return;
+window.loadAvailableProducts = loadAvailableProducts;
 
-    db.collection('products')
-        .where('createdBy', '==', user.uid)
-        .where('stock', '>', 0) // Only products with stock
-        .get()
-        .then((querySnapshot) => {
-            window.availableProducts = [];
-            querySnapshot.forEach((doc) => {
-                window.availableProducts.push({
-                    id: doc.id,
-                    ...doc.data()
-                });
-            });
-            console.log(`Loaded ${window.availableProducts.length} available products for search`);
-        })
-        .catch((error) => {
-            console.error('Error loading products for search:', error);
-            window.availableProducts = [];
+// --- INVOICE PREVIEW GENERATION (Modified for Settings Load) ---
+/**
+ * Wrapper function to ensure settings are loaded before generating preview.
+ */
+window.generateInvoicePreview = async function(invoice, invoiceId, isPreview = false) {
+    // 1. Ensure settings are available
+    if (!window.currentSettings && typeof loadSettings === 'function') {
+        console.log('Settings are null. Attempting to load settings before generating preview.');
+        // This is a crucial line to ensure the latest business details are pulled.
+        // Since loadSettings is async, we call it, but need to ensure it finishes.
+        // We'll wrap the inner logic in a try/catch, and let loadSettings populate the global.
+        await loadSettings(); 
+    }
+    
+    // 2. Define defaults and get settings (now guaranteed to be non-null or defaults)
+    const defaults = {
+        businessName: 'BILLA TRADERS',
+        address: 'DICHPALLY RS, HYD-NZB ROAD, NIZAMABAD TELANGANA 503175',
+        terms: '1. Goods once sold cannot be taken back. 2. Payment due within 30 days. 3. Disputes subject to Nizamabad jurisdiction.',
+        gstin: 'N/A',
+        pan: 'N/A'
+    };
+    const settings = window.currentSettings || defaults;
+    
+    const previewContent = document.getElementById('invoice-preview-content');
+    if (!previewContent) return;
+    
+    // Format date
+    let invoiceDate;
+    if (invoice.createdAt) {
+        if (typeof invoice.createdAt.toDate === 'function') {
+            invoiceDate = invoice.createdAt.toDate().toLocaleDateString() || 'N/A';
+        } else {
+            invoiceDate = new Date(invoice.createdAt).toLocaleDateString() || 'N/A';
+        }
+    } else {
+        invoiceDate = new Date().toLocaleDateString();
+    }
+    
+    // Handle Address display
+    const customerAddressHtml = invoice.customerAddress ? 
+        invoice.customerAddress.replace(/\n/g, '<br>') : 
+        'N/A';
+    
+    // Use invoice number if available, otherwise use ID
+    const displayInvoiceNumber = invoice.invoiceNumber || invoiceId;
+    
+    const companyAddressHtml = settings.address ? settings.address.replace(/\n/g, '<br>') : 'N/A';
+    const termsHtml = settings.terms ? settings.terms.replace(/\n/g, '<br>') : 'Terms not available.';
+
+    // Generate products table rows
+    let productsRows = '';
+    if (invoice.products && invoice.products.length > 0) {
+        invoice.products.forEach((product, index) => {
+            // Calculation of prices without GST is assumed to be handled in the form/save process
+            // For display, we calculate based on saved total and GST rate
+            const totalInclGst = product.total;
+            const priceNoGst = totalInclGst / (1 + (product.gst / 100));
+            const totalGst = totalInclGst - (totalInclGst / (1 + (product.gst / 100)));
+
+            productsRows += `
+                <tr>
+                    <td>${index + 1}</td>
+                    <td class="product-name-cell">${product.name}</td>
+                    <td class="qty-cell">${product.quantity}</td>
+                    <td class="price-cell">₹${(priceNoGst / product.quantity).toFixed(2)}</td>
+                    <td class="gst-cell">${product.gst}%</td>
+                    <td class="gst-amount-cell">₹${totalGst.toFixed(2)}</td>
+                    <td class="total-cell">₹${totalInclGst.toFixed(2)}</td>
+                </tr>
+            `;
         });
+    }
+
+    // Convert total to words
+    const grandTotalInWords = convertNumberToWords(invoice.grandTotal.toFixed(2));
+    
+    previewContent.innerHTML = `
+        <div class="invoice-paper-template">
+            <!-- Professional Header -->
+            <div class="invoice-header-print">
+                <div class="company-logo-section">
+                    <!-- Placeholder for Company Logo -->
+                    <!-- <img src="favicon.png" alt="${settings.businessName} Logo" class="invoice-logo"> -->
+                    <div class="company-name-print">${settings.businessName}</div>
+                </div>
+                <div class="company-address-section">
+                    <p class="company-address">${companyAddressHtml}</p>
+                    <p class="company-details">GSTIN: ${settings.gstin || 'N/A'} | PAN: ${settings.pan || 'N/A'}</p>
+                </div>
+            </div>
+            
+            <div class="document-title">TAX INVOICE</div>
+
+            <!-- Invoice and Customer Details -->
+            <div class="details-section">
+                <div class="bill-to-info">
+                    <h4>Bill To:</h4>
+                    <p><strong>${invoice.customerName}</strong></p>
+                    <p>Mobile: ${invoice.customerMobile}</p>
+                    <p>Address: ${customerAddressHtml}</p>
+                </div>
+                <div class="invoice-meta-info">
+                    <div class="meta-row"><strong>Invoice No:</strong> <span>${displayInvoiceNumber}</span></div>
+                    <div class="meta-row"><strong>Date:</strong> <span>${invoiceDate}</span></div>
+                    <div class="meta-row"><strong>Status:</strong> <span>${invoice.status}</span></div>
+                    <div class="meta-row"><strong>Payment:</strong> <span>Pending/Cash</span></div>
+                </div>
+            </div>
+            
+            <!-- Products Table -->
+            <table class="products-table-print">
+                <thead>
+                    <tr>
+                        <th style="width: 5%;">#</th>
+                        <th style="width: 35%;">Product/Service</th>
+                        <th style="width: 10%;">Qty</th>
+                        <th style="width: 15%;">Unit Price (Excl. GST)</th>
+                        <th style="width: 10%;">GST %</th>
+                        <th style="width: 15%;">GST Amount</th>
+                        <th style="width: 10%;">Total (Incl. GST)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${productsRows}
+                </tbody>
+            </table>
+            
+            <!-- Totals and Signature Section -->
+            <div class="summary-section">
+                <div class="amount-in-words">
+                    <p><strong>Amount in Words:</strong> Rupees ${grandTotalInWords} only</p>
+                </div>
+                <div class="totals-preview-print">
+                    <div class="totals-row">
+                        <span class="label">Subtotal (Excl. GST):</span>
+                        <span class="value">₹${(invoice.grandTotal - invoice.gstAmount).toFixed(2)}</span>
+                    </div>
+                    <div class="totals-row">
+                        <span class="label">Total GST:</span>
+                        <span class="value">₹${invoice.gstAmount.toFixed(2)}</span>
+                    </div>
+                    <div class="totals-row grand-total-row">
+                        <span class="label">Grand Total:</span>
+                        <span class="value">₹${invoice.grandTotal.toFixed(2)}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer and Signature -->
+            <div class="invoice-footer-print">
+                <div class="terms-conditions">
+                    <p><strong>Terms & Conditions:</strong></p>
+                    <p>${termsHtml}</p>
+                </div>
+                <div class="signature-section">
+                    <p>For ${settings.businessName}</p>
+                    <div class="signature-line"></div>
+                    <p>(Authorized Signatory)</p>
+                </div>
+            </div>
+        </div>
+    `;
+};
+
+// Simple function to convert number to words for invoice aesthetic (Copied from app.js)
+function convertNumberToWords(amount) {
+    if (typeof amount === 'string') {
+        amount = parseFloat(amount);
+    }
+    if (isNaN(amount) || amount === 0) {
+        return "Zero";
+    }
+    
+    const units = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine'];
+    const teens = ['Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'];
+    const tens = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
+
+    function convertGroup(n) {
+        let output = '';
+        if (n >= 100) {
+            output += units[Math.floor(n / 100)] + ' Hundred ';
+            n %= 100;
+        }
+        if (n >= 10 && n <= 19) {
+            output += teens[n - 10];
+        } else if (n >= 20) {
+            output += tens[Math.floor(n / 10)] + (n % 10 > 0 ? ' ' + units[n % 10] : '');
+        } else if (n > 0) {
+            output += units[n % 10];
+        }
+        return output.trim();
+    }
+
+    let wholePart = Math.floor(amount);
+    let decimalPart = Math.round((amount - wholePart) * 100);
+    let result = '';
+
+    let crores = Math.floor(wholePart / 10000000);
+    wholePart %= 10000000;
+
+    let lakhs = Math.floor(wholePart / 100000);
+    wholePart %= 100000;
+
+    let thousands = Math.floor(wholePart / 1000);
+    wholePart %= 1000;
+
+    let remainder = wholePart;
+    
+    if (crores > 0) {
+        result += convertGroup(crores) + ' Crore ';
+    }
+    if (lakhs > 0) {
+        result += convertGroup(lakhs) + ' Lakh ';
+    }
+    if (thousands > 0) {
+        result += convertGroup(thousands) + ' Thousand ';
+    }
+    if (remainder > 0) {
+        result += convertGroup(remainder);
+    }
+    
+    if (result.trim() === '') {
+        result = 'Zero';
+    }
+    
+    if (decimalPart > 0) {
+        result += ' and ' + convertGroup(decimalPart) + ' Paisa';
+    } else {
+        // Ensure "only" is added if no cents
+        result += ' ';
+    }
+
+    return result.trim().replace(/\s+/g, ' '); // Clean up multiple spaces
 }
+
 
 // Initialize invoice functionality when invoice page becomes active
 function initInvoicePage() {
@@ -946,10 +984,11 @@ function initInvoicePage() {
     const printBtn = document.getElementById('print-invoice-btn');
     
     if (previewBtn) {
-        previewBtn.addEventListener('click', function() {
+        previewBtn.addEventListener('click', async function() {
             // Validate form before preview
             const customerName = document.getElementById('customer-name').value;
             const customerMobile = document.getElementById('customer-mobile').value;
+            const customerAddress = document.getElementById('customer-address').value;
             
             if (!customerName || !customerMobile) {
                 showMessage('Please fill in customer details before previewing', 'error');
@@ -976,7 +1015,7 @@ function initInvoicePage() {
             const tempInvoice = {
                 customerName: customerName,
                 customerMobile: customerMobile,
-                customerAddress: document.getElementById('customer-address').value,
+                customerAddress: customerAddress,
                 products: [],
                 subtotal: parseFloat(document.getElementById('subtotal-amount').textContent.replace('₹', '')) || 0,
                 gstAmount: parseFloat(document.getElementById('gst-amount').textContent.replace('₹', '')) || 0,
@@ -1004,7 +1043,8 @@ function initInvoicePage() {
                 }
             });
             
-            generateInvoicePreview(tempInvoice, 'PREVIEW');
+            // Use the ASYNC version of generateInvoicePreview
+            await generateInvoicePreview(tempInvoice, 'PREVIEW');
             document.getElementById('invoice-preview-modal').classList.remove('hidden');
         });
     }
@@ -1049,6 +1089,10 @@ document.addEventListener('visibilitychange', function() {
         // Re-initialize product search when switching to invoice page
         if (typeof loadAvailableProducts === 'function') {
             loadAvailableProducts();
+        }
+        // Re-initialize customer list when switching to invoice page
+        if (typeof loadAvailableCustomers === 'function') {
+            loadAvailableCustomers();
         }
     }
 });
