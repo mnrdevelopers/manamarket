@@ -552,94 +552,194 @@ function generateInvoicePreview(invoice, invoiceId, isPreview = false) {
     let productsRows = '';
     if (invoice.products && invoice.products.length > 0) {
         invoice.products.forEach((product, index) => {
+            // Calculate GST amounts for display
+            const priceNoGst = (product.price / (1 + (product.gst / 100)));
+            const gstAmountPerUnit = product.price - priceNoGst;
+            const subtotalNoGst = priceNoGst * product.quantity;
+            const totalGst = gstAmountPerUnit * product.quantity;
+
             productsRows += `
                 <tr>
                     <td>${index + 1}</td>
-                    <td>${product.name}</td>
-                    <td>${product.quantity}</td>
-                    <td>₹${product.price.toFixed(2)}</td>
-                    <td>${product.gst}%</td>
-                    <td>₹${product.total.toFixed(2)}</td>
+                    <td class="product-name-cell">${product.name}</td>
+                    <td class="qty-cell">${product.quantity}</td>
+                    <td class="price-cell">₹${priceNoGst.toFixed(2)}</td>
+                    <td class="gst-cell">${product.gst}%</td>
+                    <td class="gst-amount-cell">₹${totalGst.toFixed(2)}</td>
+                    <td class="total-cell">₹${(subtotalNoGst + totalGst).toFixed(2)}</td>
                 </tr>
             `;
         });
     }
+
+    // Convert total to words (Simple conversion for demonstration)
+    const grandTotalInWords = convertNumberToWords(invoice.grandTotal.toFixed(2));
     
     previewContent.innerHTML = `
-        <div class="invoice-preview-content">
-            <!-- Simple Professional Header -->
-            <div class="invoice-header-preview">
-                <div class="company-info">
-                    <h2>BILLA TRADERS</h2>
-                    <p>DICHPALLY RS, HYD-NZB ROAD, NIZAMABAD TELANGANA 503175</p>
+        <div class="invoice-paper-template">
+            <!-- Professional Header -->
+            <div class="invoice-header-print">
+                <div class="company-logo-section">
+                    <!-- Placeholder for Company Logo -->
+                    <!-- <img src="logo.png" alt="BILLA TRADERS Logo" class="invoice-logo"> -->
+                    <div class="company-name-print">BILLA TRADERS</div>
                 </div>
-                <div class="invoice-meta">
-                    <div class="invoice-details-meta">
-                        <div class="invoice-meta-row">
-                            <strong>Invoice #:</strong> ${displayInvoiceNumber}
-                        </div>
-                        <div class="invoice-meta-row">
-                            <strong>Date:</strong> ${invoiceDate}
-                        </div>
-                        ${invoice.status ? `
-                        <div class="invoice-meta-row">
-                            <strong>Status:</strong> <span class="invoice-status">${invoice.status}</span>
-                        </div>
-                        ` : ''}
-                    </div>
+                <div class="company-address-section">
+                    <p class="company-address">DICHPALLY RS, HYD-NZB ROAD, NIZAMABAD TELANGANA 503175</p>
+                    <!-- Add professional details -->
+                    <p class="company-details">GSTIN: *XXXXXXXXXXXXXXX* | PAN: *ABCDE1234F*</p>
                 </div>
             </div>
             
-            <!-- Customer Information -->
-            <div class="customer-section">
-                <div class="customer-info-preview">
+            <div class="document-title">TAX INVOICE</div>
+
+            <!-- Invoice and Customer Details -->
+            <div class="details-section">
+                <div class="bill-to-info">
                     <h4>Bill To:</h4>
                     <p><strong>${invoice.customerName}</strong></p>
                     <p>Mobile: ${invoice.customerMobile}</p>
+                    <p>Address: N/A</p>
+                </div>
+                <div class="invoice-meta-info">
+                    <div class="meta-row"><strong>Invoice No:</strong> <span>${displayInvoiceNumber}</span></div>
+                    <div class="meta-row"><strong>Date:</strong> <span>${invoiceDate}</span></div>
+                    <div class="meta-row"><strong>Status:</strong> <span>${invoice.status}</span></div>
+                    <div class="meta-row"><strong>Payment:</strong> <span>Pending/Cash</span></div>
                 </div>
             </div>
             
             <!-- Products Table -->
-            <table class="products-table">
+            <table class="products-table-print">
                 <thead>
                     <tr>
-                        <th>#</th>
-                        <th>Product/Service</th>
-                        <th>Qty</th>
-                        <th>Price</th>
-                        <th>GST %</th>
-                        <th>Total</th>
+                        <th style="width: 5%;">#</th>
+                        <th style="width: 35%;">Product/Service</th>
+                        <th style="width: 10%;">Qty</th>
+                        <th style="width: 15%;">Unit Price (Excl. GST)</th>
+                        <th style="width: 10%;">GST %</th>
+                        <th style="width: 15%;">GST Amount</th>
+                        <th style="width: 10%;">Total (Incl. GST)</th>
                     </tr>
                 </thead>
                 <tbody>
                     ${productsRows}
+                    <!-- Placeholder rows for aesthetics -->
+                    <tr><td colspan="7" class="placeholder-row"></td></tr>
+                    <tr><td colspan="7" class="placeholder-row"></td></tr>
+                    <tr><td colspan="7" class="placeholder-row"></td></tr>
+                    <tr><td colspan="7" class="placeholder-row"></td></tr>
                 </tbody>
             </table>
             
-            <!-- Totals Section -->
-            <div class="totals-preview">
-                <div class="totals-row">
-                    <span>Subtotal:</span>
-                    <span>₹${invoice.subtotal.toFixed(2)}</span>
+            <!-- Totals and Signature Section -->
+            <div class="summary-section">
+                <div class="amount-in-words">
+                    <p><strong>Amount in Words:</strong> Rupees ${grandTotalInWords} only</p>
                 </div>
-                <div class="totals-row">
-                    <span>GST Total:</span>
-                    <span>₹${invoice.gstAmount.toFixed(2)}</span>
-                </div>
-                <div class="totals-row total">
-                    <span>Grand Total:</span>
-                    <span>₹${invoice.grandTotal.toFixed(2)}</span>
+                <div class="totals-preview-print">
+                    <div class="totals-row">
+                        <span class="label">Subtotal (Excl. GST):</span>
+                        <span class="value">₹${(invoice.grandTotal - invoice.gstAmount).toFixed(2)}</span>
+                    </div>
+                    <div class="totals-row">
+                        <span class="label">Total GST:</span>
+                        <span class="value">₹${invoice.gstAmount.toFixed(2)}</span>
+                    </div>
+                    <div class="totals-row grand-total-row">
+                        <span class="label">Grand Total:</span>
+                        <span class="value">₹${invoice.grandTotal.toFixed(2)}</span>
+                    </div>
                 </div>
             </div>
-            
-            <!-- Simple Footer -->
-            <div class="invoice-footer">
-                <p>Thank you for your business!</p>
-                <p class="terms">Payment due within 30 days</p>
+
+            <!-- Footer and Signature -->
+            <div class="invoice-footer-print">
+                <div class="terms-conditions">
+                    <p><strong>Terms & Conditions:</strong></p>
+                    <p>1. Goods once sold cannot be taken back. 2. Payment due within 30 days. 3. Disputes subject to Nizamabad jurisdiction.</p>
+                </div>
+                <div class="signature-section">
+                    <p>For BILLA TRADERS</p>
+                    <div class="signature-line"></div>
+                    <p>(Authorized Signatory)</p>
+                </div>
             </div>
         </div>
     `;
 }
+
+// Simple function to convert number to words for invoice aesthetic
+function convertNumberToWords(amount) {
+    if (typeof amount === 'string') {
+        amount = parseFloat(amount);
+    }
+    if (isNaN(amount) || amount === 0) {
+        return "Zero";
+    }
+    
+    const units = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine'];
+    const teens = ['Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'];
+    const tens = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
+
+    function convertGroup(n) {
+        let output = '';
+        if (n >= 100) {
+            output += units[Math.floor(n / 100)] + ' Hundred ';
+            n %= 100;
+        }
+        if (n >= 10 && n <= 19) {
+            output += teens[n - 10];
+        } else if (n >= 20) {
+            output += tens[Math.floor(n / 10)] + (n % 10 > 0 ? ' ' + units[n % 10] : '');
+        } else if (n > 0) {
+            output += units[n % 10];
+        }
+        return output.trim();
+    }
+
+    let wholePart = Math.floor(amount);
+    let decimalPart = Math.round((amount - wholePart) * 100);
+    let result = '';
+
+    let crores = Math.floor(wholePart / 10000000);
+    wholePart %= 10000000;
+
+    let lakhs = Math.floor(wholePart / 100000);
+    wholePart %= 100000;
+
+    let thousands = Math.floor(wholePart / 1000);
+    wholePart %= 1000;
+
+    let remainder = wholePart;
+    
+    if (crores > 0) {
+        result += convertGroup(crores) + ' Crore ';
+    }
+    if (lakhs > 0) {
+        result += convertGroup(lakhs) + ' Lakh ';
+    }
+    if (thousands > 0) {
+        result += convertGroup(thousands) + ' Thousand ';
+    }
+    if (remainder > 0) {
+        result += convertGroup(remainder);
+    }
+    
+    if (result.trim() === '') {
+        result = 'Zero';
+    }
+    
+    if (decimalPart > 0) {
+        result += ' and ' + convertGroup(decimalPart) + ' Paisa';
+    } else {
+        // Ensure "only" is added if no cents
+        result += ' ';
+    }
+
+    return result.trim().replace(/\s+/g, ' '); // Clean up multiple spaces
+}
+
 
 // Product search functionality for invoice form
 function initProductSearch() {
