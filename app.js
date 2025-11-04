@@ -401,6 +401,23 @@ const stockNav6 = document.getElementById('stock-management-nav-6');
             }
         });
     }
+    // Footer navigation handlers
+    setupFooterNavigation();
+}
+
+// Add this new function to app.js
+function setupFooterNavigation() {
+    // Footer quick links
+    const footerLinks = document.querySelectorAll('.footer-links a[href^="#"]');
+    footerLinks.forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            const pageId = this.getAttribute('href').substring(1);
+            if (pageId && document.getElementById(pageId)) {
+                showPage(pageId);
+            }
+        });
+    });
 }
 
 // Load dashboard data and statistics
